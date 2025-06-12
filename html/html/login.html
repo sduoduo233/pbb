@@ -1,0 +1,22 @@
+{{ define "login" }}
+{{ template "header" . }}
+
+<h1>Login</h1>
+
+<form action="/login" method="post">
+
+    {{ template "csrf" . }}
+
+    <input type="email" placeholder="Email" required name="email" value="{{ .post.email }}">
+    <input type="password" placeholder="Password" required name="password">
+
+    <div class="mb-3">
+        <a href="/forget-password">Forget password?</a>
+    </div>
+
+    <button>Login</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}

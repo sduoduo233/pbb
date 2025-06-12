@@ -1,0 +1,40 @@
+{{ define "servers" }}
+{{ template "header" . }}
+
+{{ template "dashboard_header" . }}
+
+<div class="mb-3">
+    <a href="/dashboard/servers/add"><button>Add</button></a>
+</div>
+
+<div class="overflow-auto text-nowrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Label</th>
+                <th>Group</th>
+                <th>Hidden</th>
+                <th>Last report</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>0</th>
+                <td>Linode</td>
+                <td>None</td>
+                <td><span class="pico-color-red-500">No</span></td>
+                <td>5 seconds ago</td>
+                <td>
+                    <button>Delete</button>
+                    <button>Edit</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{{ template "footer" . }}
+{{ end }}

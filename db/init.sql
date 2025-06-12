@@ -1,0 +1,45 @@
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT UNIQUE NOT NULL,
+    hidden INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS servers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT UNIQUE NOT NULL,
+    group_id INTEGER REFERENCES groups(id) ON DELETE SET NULL,
+    last_report INTEGER,
+    hidden INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS server_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at INTEGER NOT NULL,
+    server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+
+    cpu REAL NOT NULL,
+    memory_percent REAL NOT NULL,
+    memory_used INTEGER NOT NULL,
+    memory_total INTEGER NOT NULL,
+    disk_percent REAL NOT NULL,
+    disk_used INTEGER NOT NULL,
+    disk_total INTEGER NOT NULL,
+    network_out_rate INTEGER NOT NULL,
+    network_in_rate INTEGER NOT NULL,
+    swap_percent REAL NOT NULL,
+    swap_used INTEGER NOT NULL,
+    swap_total INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE IF NOT EXISTS tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    created_at INTEGER NOT NULL
+) STRICT;

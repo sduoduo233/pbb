@@ -1,0 +1,31 @@
+{{ define "add_server" }}
+{{ template "header" . }}
+
+<h1>Add Server</h1>
+
+<form action="/dashboard/servers/add" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Label
+        <input type="text" placeholder="Label" required name="label" value="{{ .post.label }}">
+    </label>
+
+    <label>
+        Group
+        <select name="group" aria-label="Group" required>
+            <option selected>Italian</option>
+            <option>Japanese</option>
+            <option>Indian</option>
+            <option>Thai</option>
+            <option>French</option>
+        </select>
+    </label>
+
+    <button>Save</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}
