@@ -82,8 +82,8 @@ func mustAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		_, ok := c.Get("USER").(db.User)
 		if !ok {
-			c.Response().Header().Set("Refresh", "0; url=/login")
-			return c.HTML(http.StatusForbidden, "Authentication required")
+			c.Response().Header().Set("Refresh", "1; url=/login")
+			return c.HTML(http.StatusForbidden, "Authentication required. Redirecting...")
 		}
 
 		return next(c)

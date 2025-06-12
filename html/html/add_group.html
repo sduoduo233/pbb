@@ -1,0 +1,28 @@
+{{ define "add_group" }}
+{{ template "header" . }}
+
+<h1>Add Server</h1>
+
+<form action="/dashboard/groups/add" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Label
+        <input type="text" placeholder="Label" required name="label" value="{{ .post.label }}">
+    </label>
+
+    <label>
+        Hidden
+        <select name="hidden" aria-label="Hidden" required>
+            <option {{ if .post.hidden }}selected{{ end }} value="yes">Yes</option>
+            <option {{ if not .post.hidden }}selected{{ end }} value="no">No</option>
+        </select>
+    </label>
+
+    <button>Save</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}

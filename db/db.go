@@ -7,6 +7,7 @@ import (
 	_ "embed"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -48,4 +49,14 @@ func Init() {
 		}
 		slog.Warn("admin user created", "email", "admin@example.com", "password", "admin")
 	}
+}
+
+func IsUniqueConstraintErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	if sqliteErr, ok := err.(sqlite3.Error); ok {
+		return sqliteErr.ExtendedCode == 2067 // SQLITE_CONSTRAINT_UNIQUE
+	}
+	return false
 }

@@ -1,0 +1,41 @@
+{{ define "groups" }}
+{{ template "header" . }}
+
+{{ template "dashboard_header" . }}
+
+<div class="mb-3">
+    <a href="/dashboard/groups/add"><button>Add</button></a>
+</div>
+
+<div class="overflow-auto text-nowrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Label</th>
+                <th>Hidden</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .groups }}
+            <tr>
+                <th>{{ .Id }}</th>
+                <td>{{ .Label }}</td>
+                <td>
+                    {{ if not .Hidden }}<span class="pico-color-red-500">No</span>{{ end }}
+                    {{ if .Hidden }}<span class="pico-color-green-500">Yes</span>{{ end }}
+                </td>
+                <td>
+                    {{ template "delete_button" (printf "/dashboard/groups/%d" .Id) }}
+                    <a href="/dashboard/groups/{{ .Id }}"><button>Edit</button></a>
+                </td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+{{ template "footer" . }}
+{{ end }}
