@@ -23,6 +23,11 @@
     </label>
 
     <label>
+        Secret
+        <input type="text" placeholder="Secret" required name="Secret" value="{{ .post.secret }}">
+    </label>
+
+    <label>
         Hidden
         <select name="hidden" aria-label="Hidden" required value="{{ .post.hidden }}">
             <option {{ if .post.hidden }}selected{{ end }} value="yes">Yes</option>

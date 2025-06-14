@@ -27,11 +27,14 @@ func addServer(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.Render(http.StatusOK, "add_server", D{"title": "Add Server", "groups": groups})
+	return c.Render(http.StatusOK, "add_server", D{"title": "Add Server", "groups": groups, "post": D{
+		"secret": randomToken(),
+	}})
 }
 
 func doAddServer(c echo.Context) error {
 	label := c.FormValue("label")
+	secret := c.FormValue("secret")
 	hidden := c.FormValue("hidden") == "yes"
 	groupID, err := strconv.Atoi(c.FormValue("group"))
 	if err != nil {
@@ -39,9 +42,9 @@ func doAddServer(c echo.Context) error {
 	}
 
 	if groupID < 0 {
-		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden) VALUES (?, ?, ?)", label, nil, hidden)
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret) VALUES (?, ?, ?, ?)", label, nil, hidden, secret)
 	} else {
-		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden) VALUES (?, ?, ?)", label, groupID, hidden)
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret) VALUES (?, ?, ?, ?)", label, groupID, hidden, secret)
 	}
 	if err != nil {
 		if db.IsUniqueConstraintErr(err) {
@@ -83,6 +86,7 @@ func editServer(c echo.Context) error {
 			"label":  server.Label,
 			"group":  If(server.GroupId.Valid, server.GroupId.Int32, -1),
 			"hidden": If(server.Hidden, "yes", "no"),
+			"secret": server.Secret,
 		},
 		"id":     id,
 		"groups": groups,
@@ -99,9 +103,9 @@ func doEditServer(c echo.Context) error {
 	}
 
 	if groupID < 0 {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ? WHERE id = ?", label, nil, hidden, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, nil, hidden, id)
 	} else {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ? WHERE id = ?", label, groupID, hidden, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, groupID, hidden, id)
 	}
 	if err != nil {
 		if db.IsUniqueConstraintErr(err) {

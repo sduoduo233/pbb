@@ -15,7 +15,12 @@ CREATE TABLE IF NOT EXISTS servers (
     label TEXT UNIQUE NOT NULL,
     group_id INTEGER REFERENCES groups(id) ON DELETE SET NULL,
     last_report INTEGER,
-    hidden INTEGER NOT NULL
+    hidden INTEGER NOT NULL,
+    secret TEXT UNIQUE NOT NULl,
+
+    arch TEXT,
+    operating_system TEXT,
+    cpu TEXT
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS server_metrics (
