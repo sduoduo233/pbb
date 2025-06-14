@@ -40,19 +40,20 @@ type ServerWithGroupLabel struct {
 }
 
 type ServerMetrics struct {
-	Id        int32 `db:"id"`
-	CreatedAt int32 `db:"created_at"`
-	ServerId  int32 `db:"server_id"`
+	Id        int32  `db:"id"`
+	CreatedAt uint64 `db:"created_at"`
+	ServerId  int32  `db:"server_id"`
 
-	Cpu            float32 `db:"cpu"`
-	MemoryPercent  float32 `db:"memory_percent"`
-	MemoryUsed     int32   `db:"memory_used"`
-	MemoryTotal    int32   `db:"memory_total"`
-	DiskPercent    float32 `db:"disk_percent"`
-	DiskUsed       int32   `db:"disk_used"`
-	DiskTotal      int32   `db:"disk_total"`
-	NetworkOutRate int32   `db:"network_out_rate"`
-	NetworkInRate  int32   `db:"network_in_rate"`
-	SwapUsed       int32   `db:"swap_used"`
-	SwapTotal      int32   `db:"spaw_total"`
+	Cpu            float32 `db:"cpu" json:"cpu"`
+	MemoryPercent  float32 `db:"memory_percent" json:"memory_percent"`
+	MemoryUsed     uint64  `db:"memory_used" json:"memory_used"`
+	MemoryTotal    uint64  `db:"memory_total" json:"memory_total"`
+	DiskPercent    float32 `db:"disk_percent" json:"disk_percent"`
+	DiskUsed       uint64  `db:"disk_used" json:"disk_used"`
+	DiskTotal      uint64  `db:"disk_total" json:"disk_total"`
+	NetworkOutRate uint64  `db:"network_out_rate" json:"network_out_rate"`
+	NetworkInRate  uint64  `db:"network_in_rate" json:"network_in_rate"`
+	SwapUsed       uint64  `db:"swap_used" json:"swap_used"`
+	SwapTotal      uint64  `db:"swap_total" json:"swap_total"`
+	SwapPercent    float32 `db:"swap_percent" json:"swap_percent"`
 }

@@ -21,6 +21,10 @@ func randomToken() string {
 func csrf(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
+		if c.Path() == "/agent/metric" {
+			return next(c)
+		}
+
 		token := "" // csrf token from cookie
 
 		cookie, err := c.Cookie("CSRF_TOKEN")

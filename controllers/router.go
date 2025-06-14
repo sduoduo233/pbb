@@ -33,4 +33,6 @@ func Route(g *echo.Group) {
 	g.POST("/dashboard/groups/:id", doEditGroup, mustAuth)
 	g.DELETE("/dashboard/groups/:id", deleteGroup, mustAuth)
 
+	g.POST("/agent/metric", metrics)
+
 }
