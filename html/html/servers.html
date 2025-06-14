@@ -21,17 +21,35 @@
             </tr>
         </thead>
         <tbody>
+            {{ range .servers }}
             <tr>
-                <th>0</th>
-                <td>Linode</td>
-                <td>None</td>
-                <td><span class="pico-color-red-500">No</span></td>
-                <td>5 seconds ago</td>
+                <th>{{ .Id }}</th>
+                <td>{{ .Label }}</td>
                 <td>
-                    <button>Delete</button>
-                    <button>Edit</button>
+                    {{ if .GroupLabel.Valid }}
+                    <a href="/dashboard/groups/{{ .GroupId.Int32 }}">{{ .GroupLabel.String }}</a>
+                    {{ else }}
+                    Unassigned
+                    {{ end }}
+                </td>
+                <td>
+                    {{ if not .Hidden }}<span class="pico-color-red-500">No</span>{{ end }}
+                    {{ if .Hidden }}<span class="pico-color-green-500">Yes</span>{{ end }}
+                </td>
+                <td>
+                    {{ if .LastReport.Valid }}
+                    {{ .LastReport.String }}
+                    {{ else }}
+                    No report
+                    {{ end }}
+                </td>
+                <td>
+                    {{ template "delete_button" (printf "/dashboard/servers/%d" .Id) }}
+                    <a href="/dashboard/servers/edit/{{ .Id }}"><button>Edit</button></a>
+                    <a href="/dashboard/servers/view/{{ .Id }}"><button>View</button></a>
                 </td>
             </tr>
+            {{ end }}
         </tbody>
     </table>
 </div>

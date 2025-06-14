@@ -21,6 +21,10 @@ func Route(g *echo.Group) {
 
 	g.GET("/dashboard/servers", servers, mustAuth)
 	g.GET("/dashboard/servers/add", addServer, mustAuth)
+	g.POST("/dashboard/servers/add", doAddServer, mustAuth)
+	g.GET("/dashboard/servers/edit/:id", editServer, mustAuth)
+	g.POST("/dashboard/servers/edit/:id", doEditServer, mustAuth)
+	g.DELETE("/dashboard/servers/:id", deleteServer, mustAuth)
 
 	g.GET("/dashboard/groups", groups, mustAuth)
 	g.GET("/dashboard/groups/add", addGroup, mustAuth)
@@ -28,4 +32,5 @@ func Route(g *echo.Group) {
 	g.GET("/dashboard/groups/:id", editGroup, mustAuth)
 	g.POST("/dashboard/groups/:id", doEditGroup, mustAuth)
 	g.DELETE("/dashboard/groups/:id", deleteGroup, mustAuth)
+
 }

@@ -1,5 +1,12 @@
 {{ define "footer" }}
 
+<script>
+    $(function() {
+        $("select").each(function() {
+            $(this).val($(this).attr("value"))
+        })
+    })
+</script>
     
 </main>
 </body>

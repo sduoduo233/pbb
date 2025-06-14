@@ -1,5 +1,7 @@
 package db
 
+import "database/sql"
+
 type User struct {
 	Id       int32  `db:"id"`
 	Email    string `db:"email"`
@@ -20,9 +22,18 @@ type Group struct {
 }
 
 type Server struct {
-	Id         int32  `db:"id"`
-	Label      string `db:"label"`
-	Hidden     bool   `db:"hidden"`
-	GroupId    int32  `db:"group_id"`
-	LastReport int64  `db:"last_report"`
+	Id         int32         `db:"id"`
+	Label      string        `db:"label"`
+	Hidden     bool          `db:"hidden"`
+	GroupId    sql.NullInt32 `db:"group_id"`
+	LastReport sql.NullInt64 `db:"last_report"`
+}
+
+type ServerWithGroupLabel struct {
+	Id         int32          `db:"id"`
+	Label      string         `db:"label"`
+	Hidden     bool           `db:"hidden"`
+	GroupId    sql.NullInt32  `db:"group_id"`
+	GroupLabel sql.NullString `db:"group_label"`
+	LastReport sql.NullInt64  `db:"last_report"`
 }

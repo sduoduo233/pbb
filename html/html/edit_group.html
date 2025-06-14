@@ -1,7 +1,7 @@
 {{ define "edit_group" }}
 {{ template "header" . }}
 
-<h1>Edit Server</h1>
+<h1>Edit Group</h1>
 
 <form action="/dashboard/groups/{{ .id }}" method="post">
 
@@ -14,9 +14,9 @@
 
     <label>
         Hidden
-        <select name="hidden" aria-label="Hidden" required>
-            <option {{ if .post.hidden }}selected{{ end }} value="yes">Yes</option>
-            <option {{ if not .post.hidden }}selected{{ end }} value="no">No</option>
+        <select name="hidden" aria-label="Hidden" required value="{{ .post.hidden }}">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
         </select>
     </label>
 

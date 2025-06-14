@@ -25,7 +25,7 @@ func addGroup(c echo.Context) error {
 
 func doAddGroup(c echo.Context) error {
 	label := c.FormValue("label")
-	hidden := c.FormValue("hidden") == "on"
+	hidden := c.FormValue("hidden") == "yes"
 
 	_, err := db.DB.Exec("INSERT INTO groups (label, hidden) VALUES (?, ?)", label, hidden)
 	if err != nil {
@@ -50,16 +50,19 @@ func editGroup(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.Render(http.StatusOK, "edit_group", D{"title": "Edit Group", "post": D{"label": group.Label, "hidden": group.Hidden}, "id": id})
+	return c.Render(http.StatusOK, "edit_group", D{"title": "Edit Group", "post": D{"label": group.Label, "hidden": If(group.Hidden, "yes", "no")}, "id": id})
 }
 
 func doEditGroup(c echo.Context) error {
 	id := c.Param("id")
 	label := c.FormValue("label")
-	hidden := c.FormValue("hidden") == "on"
+	hidden := c.FormValue("hidden") == "yes"
 
 	_, err := db.DB.Exec("UPDATE groups SET label = ?, hidden = ? WHERE id = ?", label, hidden, id)
 	if err != nil {
+		if db.IsUniqueConstraintErr(err) {
+			return c.Render(http.StatusOK, "edit_group", D{"title": "Edit Group", "error": "Group with this label already exists", "post": c.Request().PostForm, "id": id})
+		}
 		return fmt.Errorf("db: %w", err)
 	}
 

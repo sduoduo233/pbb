@@ -1,15 +1,133 @@
 package controllers
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/sduoduo233/pbb/db"
 )
 
 func servers(c echo.Context) error {
-	return c.Render(http.StatusOK, "servers", D{"title": "Servers"})
+	servers := make([]db.ServerWithGroupLabel, 0)
+	err := db.DB.Select(&servers, "SELECT s.id, s.label, s.group_id, s.hidden, s.last_report, g.label as group_label FROM servers AS s LEFT JOIN groups AS g ON s.group_id = g.id ORDER BY s.id ASC")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+	return c.Render(http.StatusOK, "servers", D{"title": "Servers", "servers": servers})
 }
 
 func addServer(c echo.Context) error {
-	return c.Render(http.StatusOK, "add_server", D{"title": "Add Server"})
+	groups := make([]db.Group, 0)
+	err := db.DB.Select(&groups, "SELECT * FROM groups ORDER BY id ASC")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.Render(http.StatusOK, "add_server", D{"title": "Add Server", "groups": groups})
+}
+
+func doAddServer(c echo.Context) error {
+	label := c.FormValue("label")
+	hidden := c.FormValue("hidden") == "yes"
+	groupID, err := strconv.Atoi(c.FormValue("group"))
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Invalid group ID")
+	}
+
+	if groupID < 0 {
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden) VALUES (?, ?, ?)", label, nil, hidden)
+	} else {
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden) VALUES (?, ?, ?)", label, groupID, hidden)
+	}
+	if err != nil {
+		if db.IsUniqueConstraintErr(err) {
+			groups := make([]db.Group, 0)
+			err := db.DB.Select(&groups, "SELECT * FROM groups ORDER BY id ASC")
+			if err != nil {
+				return fmt.Errorf("db: %w", err)
+			}
+
+			return c.Render(http.StatusOK, "add_server", D{"title": "Add Server", "error": "Server with this label already exists", "post": c.Request().PostForm, "groups": groups})
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.Redirect(http.StatusFound, "/dashboard/servers")
+}
+
+func editServer(c echo.Context) error {
+	id := c.Param("id")
+
+	server := db.Server{}
+	err := db.DB.Get(&server, "SELECT * FROM servers WHERE id = ?", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.Render(http.StatusNotFound, "error", D{"error": "Server Not Found"})
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	groups := make([]db.Group, 0)
+	err = db.DB.Select(&groups, "SELECT * FROM groups ORDER BY id ASC")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.Render(http.StatusOK, "edit_server", D{
+		"title": "Edit Server",
+		"post": D{
+			"label":  server.Label,
+			"group":  If(server.GroupId.Valid, server.GroupId.Int32, -1),
+			"hidden": If(server.Hidden, "yes", "no"),
+		},
+		"id":     id,
+		"groups": groups,
+	})
+}
+
+func doEditServer(c echo.Context) error {
+	id := c.Param("id")
+	label := c.FormValue("label")
+	hidden := c.FormValue("hidden") == "yes"
+	groupID, err := strconv.Atoi(c.FormValue("group"))
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Invalid group ID")
+	}
+
+	if groupID < 0 {
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ? WHERE id = ?", label, nil, hidden, id)
+	} else {
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ? WHERE id = ?", label, groupID, hidden, id)
+	}
+	if err != nil {
+		if db.IsUniqueConstraintErr(err) {
+			groups := make([]db.Group, 0)
+			err = db.DB.Select(&groups, "SELECT * FROM groups ORDER BY id ASC")
+			if err != nil {
+				return fmt.Errorf("db: %w", err)
+			}
+			return c.Render(http.StatusOK, "edit_server", D{"title": "Edit Server", "error": "Server with this label already exists", "post": c.Request().PostForm, "id": id, "groups": groups})
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.Redirect(http.StatusFound, "/dashboard/servers")
+}
+
+func deleteServer(c echo.Context) error {
+	id := c.Param("id")
+
+	_, err := db.DB.Exec("DELETE FROM servers WHERE id = ?", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.Render(http.StatusNotFound, "error", D{"error": "Server Not Found"})
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.String(http.StatusOK, "OK")
 }
