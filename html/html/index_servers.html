@@ -1,0 +1,41 @@
+{{ define "index_servers" }}
+
+<div hx-get="/servers" hx-trigger="every 3s" hx-swap="outerHTML">
+    
+
+
+{{ range .groups }}
+
+    <h3>{{ .Label }}</h3>
+
+    <div class="row align-items-stretch">
+    {{ range .Servers }}
+
+        {{ template "server_card" . }}
+
+    {{ else }}
+
+        <p class="col-12">No server found in this group.</p>
+
+    {{ end }}
+    </div>
+
+{{end}}
+
+</div>
+
+<span class="fs-1" id="stat-total" hx-swap-oob="true">{{ .stat_total }}</span>
+<span class="fs-1" id="stat-online" hx-swap-oob="true">{{ .stat_online }}</span>
+<span class="fs-1" id="stat-offline" hx-swap-oob="true">{{ .stat_offline }}</span>
+<div id="stat-network" class="vstack" hx-swap-oob="true">
+    <div class="hstack gap-2">
+        <i class="bi bi-arrow-up-circle-fill"></i>
+        <span>{{ .stat_network_out }}/s</span>
+    </div>
+    <div class="hstack gap-2">
+        <i class="bi bi-arrow-down-circle-fill"></i>
+        <span>{{ .stat_network_in }}/s</span>
+    </div>
+</div>
+
+{{ end }}

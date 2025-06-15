@@ -14,10 +14,17 @@ func Route(g *echo.Group) {
 		return c.HTML(http.StatusNotFound, "404 not found")
 	})
 
+	// public routes
+
 	g.GET("/", index)
+	g.GET("/servers", indexServers)
+
+	// auth
 
 	g.GET("/login", login)
 	g.POST("/login", doLogin)
+
+	// admin dashboard
 
 	g.GET("/dashboard/servers", servers, mustAuth)
 	g.GET("/dashboard/servers/add", addServer, mustAuth)
@@ -32,6 +39,8 @@ func Route(g *echo.Group) {
 	g.GET("/dashboard/groups/:id", editGroup, mustAuth)
 	g.POST("/dashboard/groups/:id", doEditGroup, mustAuth)
 	g.DELETE("/dashboard/groups/:id", deleteGroup, mustAuth)
+
+	// agent reporting
 
 	g.POST("/agent/metric", metrics)
 

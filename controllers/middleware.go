@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,12 +9,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sduoduo233/pbb/db"
 )
-
-func randomToken() string {
-	var buf [16]byte
-	rand.Read(buf[:])
-	return hex.EncodeToString(buf[:])
-}
 
 func csrf(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {

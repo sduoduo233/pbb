@@ -5,6 +5,10 @@
         $("select").each(function() {
             $(this).val($(this).attr("value"))
         })
+
+        $("timestamp").each(function() {
+            $(this).html(new Date($(this).html() * 1000).toLocaleString())
+        })
     })
 </script>
     

@@ -1,0 +1,52 @@
+{{ define "server_card" }}
+
+    <div class="col-12 col-md-6 col-lg-4">
+        <article class="vstack gap-2">
+            <header class="hstack gap-2">
+                {{ if .Online }}
+                <i class="bi bi-circle-fill text-success"></i>
+                {{ else }}
+                <i class="bi bi-circle-fill text-danger"></i>
+                {{ end }}
+                <span>{{ .Label }}</span>
+            </header>
+            
+            <div class="vstack gap-1">
+                <div class="d-flex justify-content-between">
+                    <span>CPU</span>
+                    <span class="text-secondary">{{ printf "%.1f" .Cpu }}%</span>
+                </div>
+                <progress value="{{ .Cpu }}" max="100">
+            </div>
+
+            <div class="vstack gap-1">
+                <div class="d-flex justify-content-between">
+                    <span>Memory</span>
+                    <span class="text-secondary">{{ .MemoryUsedFormated }} / {{ .MemoryTotalFormated }}</span>
+                </div>
+                <progress value="{{ .MemoryUsed }}" max="{{ .MemoryTotal }}">
+            </div>
+
+            <div class="vstack gap-1">
+                <div class="d-flex justify-content-between">
+                    <span>Disk</span>
+                    <span class="text-secondary">{{ .DiskUsedFormated }} / {{ .DiskTotalFormated }}</span>
+                </div>
+                <progress value="{{ .DiskUsed }}" max="{{ .DiskTotal }}">
+            </div>
+
+            <div class="vstack gap-1">
+                <div class="d-flex justify-content-between">
+                    <span>Network In</span>
+                    <span class="text-secondary">{{ .NetworkInFormated }}/s</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Network Out</span>
+                    <span class="text-secondary">{{ .NetworkOutFormated }}/s</span>
+                </div>
+            </div>
+
+        </article>
+    </div>
+
+{{ end }}

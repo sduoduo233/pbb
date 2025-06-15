@@ -38,7 +38,7 @@
                 </td>
                 <td>
                     {{ if .LastReport.Valid }}
-                    {{ .LastReport.String }}
+                    <timestamp>{{ .LastReport.Int64 }}</timestamp>
                     {{ else }}
                     No report
                     {{ end }}

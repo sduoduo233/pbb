@@ -2,25 +2,35 @@
 {{ template "header" . }}
 
 
-<div class="row">
-    <div class="col-12 col-lg-4">
-        <article>
+<div class="row mb-3">
+    <div class="col-6 col-lg-3">
+        <article class="h-100">
             <header>Total servers</header>
-            <span class="fs-1">10</span>
+            <span id="stat-total" aria-busy="true"></span>
         </article>
     </div>
-    <div class="col-12 col-lg-4">
-        <article>
+    <div class="col-6 col-lg-3">
+        <article class="h-100">
             <header>Online servers</header>
-            <span class="fs-1">10</span>
+            <span id="stat-online" aria-busy="true"></span>
         </article>
     </div>
-    <div class="col-12 col-lg-4">
-        <article>
-            <header>Network Stats</header>
-            <span class="fs-1">10</span>
+    <div class="col-6 col-lg-3">
+        <article class="h-100">
+            <header>Offline servers</header>
+            <span id="stat-offline" aria-busy="true"></span>
         </article>
     </div>
+    <div class="col-6 col-lg-3">
+        <article class="h-100">
+            <header>Network</header>
+            <div id="stat-network" aria-busy="true"></div>
+        </article>
+    </div>
+</div>
+
+<div hx-get="/servers" hx-trigger="load" hx-swap="outerHTML">
+    <article aria-busy="true"></article>
 </div>
 
 
