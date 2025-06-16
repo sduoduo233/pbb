@@ -30,6 +30,14 @@
 
             <div class="vstack gap-1">
                 <div class="d-flex justify-content-between">
+                    <span>Swap</span>
+                    <span class="text-secondary">{{ .SwapUsedFormated }} / {{ .SwapTotalFormated }}</span>
+                </div>
+                <progress value="{{ .SwapUsed }}" max="{{ .SwapTotal }}">
+            </div>
+
+            <div class="vstack gap-1">
+                <div class="d-flex justify-content-between">
                     <span>Disk</span>
                     <span class="text-secondary">{{ .DiskUsedFormated }} / {{ .DiskTotalFormated }}</span>
                 </div>

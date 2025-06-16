@@ -146,5 +146,16 @@ func getMetirc() (*ServerMetric, error) {
 	m.MemoryTotal = uint64(memoryStat.Total)
 	m.MemoryUsed = uint64(memoryStat.Used)
 
+	// swap
+
+	swapStat, err := mem.SwapMemory()
+	if err != nil {
+		return nil, fmt.Errorf("swap: %w", err)
+	}
+
+	m.SwapUsed = uint64(swapStat.Used)
+	m.SwapTotal = uint64(swapStat.Total)
+	m.SwapPercent = float32(swapStat.UsedPercent)
+
 	return &m, nil
 }

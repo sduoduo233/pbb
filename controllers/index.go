@@ -32,6 +32,10 @@ func indexServers(c echo.Context) error {
 		DiskTotalFormated   string
 		NetworkInFormated   string
 		NetworkOutFormated  string
+		SwapTotal           uint64
+		SwapUsed            uint64
+		SwapTotalFormated   string
+		SwapUsedFormated    string
 	}
 
 	type ServerGroup struct {
@@ -110,6 +114,10 @@ func indexServers(c echo.Context) error {
 			server.DiskTotalFormated = formatBytes(metric.DiskTotal)
 			server.NetworkInFormated = formatBytes(metric.NetworkInRate)
 			server.NetworkOutFormated = formatBytes(metric.NetworkOutRate)
+			server.SwapUsed = metric.SwapUsed
+			server.SwapTotal = metric.SwapTotal
+			server.SwapTotalFormated = formatBytes(metric.SwapTotal)
+			server.SwapUsedFormated = formatBytes(metric.SwapUsed)
 
 			statNetworkIn += int(metric.NetworkInRate)
 			statNetworkOut += int(metric.NetworkOutRate)
