@@ -97,15 +97,16 @@ func doEditServer(c echo.Context) error {
 	id := c.Param("id")
 	label := c.FormValue("label")
 	hidden := c.FormValue("hidden") == "yes"
+	secret := c.FormValue("secret")
 	groupID, err := strconv.Atoi(c.FormValue("group"))
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid group ID")
 	}
 
 	if groupID < 0 {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, nil, hidden, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, nil, hidden, secret, id)
 	} else {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, groupID, hidden, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, groupID, hidden, secret, id)
 	}
 	if err != nil {
 		if db.IsUniqueConstraintErr(err) {

@@ -18,6 +18,7 @@ func Route(g *echo.Group) {
 
 	g.GET("/", index)
 	g.GET("/servers", indexServers)
+	g.GET("/servers/:id", view)
 
 	// auth
 

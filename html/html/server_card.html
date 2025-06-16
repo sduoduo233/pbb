@@ -1,6 +1,7 @@
 {{ define "server_card" }}
 
-    <div class="col-12 col-md-6 col-lg-4">
+<div class="col-12 col-md-6 col-lg-4">
+    <a href="/servers/{{ .ID }}" class="text-decoration-none" style="color: inherit;">
         <article class="vstack gap-2">
             <header class="hstack gap-2">
                 {{ if .Online }}
@@ -47,6 +48,8 @@
             </div>
 
         </article>
-    </div>
+    </a>
+    
+</div>
 
 {{ end }}

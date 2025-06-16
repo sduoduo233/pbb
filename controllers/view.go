@@ -1,7 +1,11 @@
 package controllers
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
 
 func view(c echo.Context) error {
-	return nil
+	return c.Render(http.StatusOK, "view", D{})
 }

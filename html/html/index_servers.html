@@ -6,16 +6,17 @@
 
 {{ range .groups }}
 
+
+    {{ if not .Servers }}
+    {{ continue }}
+    {{ end }}
+
     <h3>{{ .Label }}</h3>
 
     <div class="row align-items-stretch">
     {{ range .Servers }}
 
         {{ template "server_card" . }}
-
-    {{ else }}
-
-        <p class="col-12">No server found in this group.</p>
 
     {{ end }}
     </div>

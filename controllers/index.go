@@ -64,7 +64,7 @@ func indexServers(c echo.Context) error {
 		}
 
 		var dbServers []db.Server
-		err = db.DB.Select(&dbServers, "SELECT * FROM servers WHERE (NOT hidden OR ?) AND (group_id = ? OR ? < 0)", showHidden, dbGroup.Id, dbGroup.Id)
+		err = db.DB.Select(&dbServers, "SELECT * FROM servers WHERE (NOT hidden OR ?) AND (group_id = ? OR (? < 0 AND group_id = NULL))", showHidden, dbGroup.Id, dbGroup.Id)
 		if err != nil {
 			return fmt.Errorf("db: %w", err)
 		}
@@ -119,8 +119,6 @@ func indexServers(c echo.Context) error {
 
 		groups = append(groups, group)
 	}
-
-	time.Sleep(time.Second)
 
 	return c.Render(http.StatusOK, "index_servers", D{"groups": groups, "stat_online": statOnline, "stat_offline": statOffline, "stat_total": statTotal, "stat_network_in": formatBytes(uint64(statNetworkIn)), "stat_network_out": formatBytes(uint64(statNetworkOut))})
 }
