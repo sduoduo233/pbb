@@ -4,7 +4,7 @@
 
 <a href="/" class="text-decoration-none" style="color: inherit;"><i class="bi bi-arrow-left-circle-fill"></i> Back</a>
 
-<h2 class="my-3">{{ .label }}</h2>
+<h2 class="my-3"><i class="bi bi-circle-fill" id="online"></i> {{ .label }}</h2>
 
 <style>
     [aria-busy="true"] * {
@@ -117,7 +117,6 @@
             return d + " seconds";
         }
 
-        let reloadTimeout = -1;
         async function reload() {
             try {
                 const range = parseInt($("#range").val());
@@ -132,10 +131,12 @@
                 $("#cpu").text(json.server.cpu || "N/A");
                 $("#arch").text(json.server.arch || "N/A");
                 $("#os").text(json.server.operating_system || "N/A");
+                $("#online").removeClass("text-success text-danger").addClass(json.server.online ? "text-success" : "text-danger");
 
                 if (json.metrics.length > 0) {
                     $("#uptime").text(formatDuration(json.metrics[0].uptime));
                     $("#load").text(json.metrics[0].load_1 + " " + json.metrics[0].load_5 + " " + json.metrics[0].load_15);
+                    
                 } else {
                     $("#uptime").text("N/A");
                     $("#load").text("N/A");
@@ -156,22 +157,17 @@
             } catch (e) {
                 console.error("reload error", e);
             } finally {
-                reloadTimeout = setTimeout(reload, 3000);
+                setTimeout(reload, 2000);
             }
         }
 
         reload();
 
-        $("#range").on("change", function () {
-            clearTimeout(reloadTimeout);
-            reload()
-        })
-
         function drawGraph(container, lines, range, rangeY = [0, 100]) {
 
             const width = $(container).width();
             const height = 200;
-            const margin = 20;
+            const margin = 25;
 
             const x = d3.scaleUtc()
                 .domain([new Date(Date.now() - range * 1000), new Date()])

@@ -65,5 +65,5 @@ func viewData(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.JSON(http.StatusOK, D{"server": D{"last_report": server.LastReport.Int64, "arch": server.Arch.String, "operating_system": server.OS.String, "cpu": server.Cpu.String}, "metrics": metrics})
+	return c.JSON(http.StatusOK, D{"server": D{"last_report": server.LastReport.Int64, "arch": server.Arch.String, "operating_system": server.OS.String, "cpu": server.Cpu.String, "online": server.LastReport.Valid && time.Since(time.Unix(server.LastReport.Int64, 0)) < time.Second*10}, "metrics": metrics})
 }
