@@ -46,6 +46,7 @@
 
 <select id="range" value="300" class="w-auto">
     <option value="300">5 Minutes</option>
+    <option value="1800">30 Minutes</option>
     <option value="7200">2 Hours</option>
     <option value="86400">24 Hours</option>
     <option value="259200">3 Days</option>
@@ -73,6 +74,13 @@
         <article aria-busy="true">
             <header>Memory</header>
             <div id="graph-mem"></div>
+        </article>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <article aria-busy="true">
+            <header>Network</header>
+            <div id="graph-network"></div>
         </article>
     </div>
 
@@ -133,22 +141,17 @@
                     $("#load").text("N/A");
                 }
 
-                drawGraph("#graph-cpu", json.metrics.map(m => ({
-                    date: new Date(m.CreatedAt * 1000),
-                    value: m.cpu,
-                })), range);
-                drawGraph("#graph-swap", json.metrics.map(m => ({
-                    date: new Date(m.CreatedAt * 1000),
-                    value: m.swap_percent,
-                })), range);
-                drawGraph("#graph-mem", json.metrics.map(m => ({
-                    date: new Date(m.CreatedAt * 1000),
-                    value: m.memory_percent,
-                })), range);
-                drawGraph("#graph-disk", json.metrics.map(m => ({
-                    date: new Date(m.CreatedAt * 1000),
-                    value: m.disk_percent,
-                })), range);
+                drawGraph("#graph-cpu", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.cpu, }))}], range);
+                drawGraph("#graph-swap", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.swap_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-mem", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.memory_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-disk", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.disk_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-network", [
+                    {data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.network_out_rate / 1024 / 1024, })), label: "Outbound (MB/s)"},
+                    {data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.network_in_rate / 1024 / 1024, })), label: "Inbound (MB/s)"},
+                ], range, [
+                    0, Math.max(...json.metrics.map(m => m.network_out_rate / 1024 / 1024), ...json.metrics.map(m => m.network_in_rate / 1024 / 1024)) * 1.2
+                ]);
+
 
             } catch (e) {
                 console.error("reload error", e);
@@ -164,7 +167,7 @@
             reload()
         })
 
-        function drawGraph(container, data, range, rangeY = [0, 100]) {
+        function drawGraph(container, lines, range, rangeY = [0, 100]) {
 
             const width = $(container).width();
             const height = 200;
@@ -182,9 +185,13 @@
                 .attr("width", width)
                 .attr("height", height);
 
+            // axises
+
             let timeFormat = "%H:%M";
             let ticks = d3.timeMinute.every(1);
-            if (range === 7200) { // 2 hours
+            if (range === 1800) { // 30 minutes
+                ticks = d3.timeMinute.every(5);
+            } else if (range === 7200) { // 2 hours
                 ticks = d3.timeMinute.every(20);
             } else if (range === 86400) { // 24 hours
                 ticks = d3.timeHour.every(4);
@@ -198,43 +205,58 @@
 
             svg.append("g")
                 .attr("transform", `translate(0,${height - margin})`)
-                .call(d3.axisBottom(x).ticks(ticks).tickSizeOuter(0).tickFormat(d3.timeFormat(timeFormat)))
-            // .selectAll("text")
-            // .attr("x", -20)
-            // .attr("y", 5)
-            // .attr("transform", "rotate(-45)");
-
+                .call(d3.axisBottom(x).ticks(ticks).tickSizeOuter(0).tickFormat(d3.timeFormat(timeFormat)));
+            
             svg.append("g")
                 .attr("transform", `translate(${margin},0)`)
-                .call(d3.axisLeft(y).ticks(2).tickSizeInner(0))
+                .call(d3.axisLeft(y).ticks(4).tickSizeInner(0))
                 .call(g => g.select(".domain").remove());
 
-            // cut the line if the gap is greater than 10 seconds
-            let segments = [[]];
-            for (let i = 0; i < data.length; i++) {
-                let lastSegment = segments[segments.length - 1];
-                if (lastSegment.length === 0) {
-                    lastSegment.push(data[i]);
-                    continue;
+            // lines
+            const colors = ["steelblue", "orange", "green", "red", "purple"];
+            for (let l = 0; l < lines.length; l++) {
+                const line = lines[l];
+                const data = line.data;
+
+                // cut the line if the gap is greater than 10 seconds
+                let segments = [[]];
+                for (let i = 0; i < data.length; i++) {
+                    let lastSegment = segments[segments.length - 1];
+                    if (lastSegment.length === 0) {
+                        lastSegment.push(data[i]);
+                        continue;
+                    }
+                    if (lastSegment[lastSegment.length - 1].date - data[i].date >= 10 * 1000) {
+                        segments.push([data[i]]);
+                    } else {
+                        lastSegment.push(data[i]);
+                    }
                 }
-                if (lastSegment[lastSegment.length - 1].date - data[i].date >= 10 * 1000) {
-                    segments.push([data[i]]);
-                } else {
-                    lastSegment.push(data[i]);
+
+                for (let i = 0; i < segments.length; i++) {
+                    const line = d3.line()
+                        .x(d => x(d.date))
+                        .y(d => y(d.value));
+
+                    svg.append("path")
+                        .attr("fill", "none")
+                        .attr("stroke", colors[l])
+                        .attr("stroke-width", 1.5)
+                        .attr("d", line(segments[i]));
+                }
+
+                if (line.label) {
+                    svg.append("text")
+                        .text(line.label)
+                        .attr("x", width - margin)
+                        .attr("y", 12 * (l + 1))
+                        .attr("text-anchor", "end")
+                        .attr("fill", colors[l])
+                        .attr("font-size", "12px");
                 }
             }
 
-            for (let i = 0; i < segments.length; i++) {
-                const line = d3.line()
-                    .x(d => x(d.date))
-                    .y(d => y(d.value));
-
-                svg.append("path")
-                    .attr("fill", "none")
-                    .attr("stroke", "steelblue")
-                    .attr("stroke-width", 1.5)
-                    .attr("d", line(segments[i]));
-            }
+            
 
             $(container).children().remove();
             $(container).append(svg.node());
