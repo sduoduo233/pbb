@@ -60,10 +60,35 @@ func viewData(c echo.Context) error {
 
 	metrics := make([]db.ServerMetrics, 0)
 	after := time.Now().Add(-(time.Second * time.Duration(duration))).Unix()
-	err = db.DB.Select(&metrics, "SELECT * FROM server_metrics WHERE server_id = ? AND created_at > ? ORDER BY id DESC", server.Id, after)
-	if err != nil {
+
+	if duration >= 7200 { // 2 hours or more
+		// use sampled data
+		err = db.DB.Select(&metrics, "SELECT * FROM server_metrics_10m WHERE server_id = ? AND created_at > ? ORDER BY id DESC", server.Id, after)
+		if err != nil {
+			return fmt.Errorf("db: %w", err)
+		}
+	} else {
+		err = db.DB.Select(&metrics, "SELECT * FROM server_metrics WHERE server_id = ? AND created_at > ? ORDER BY id DESC", server.Id, after)
+		if err != nil {
+			return fmt.Errorf("db: %w", err)
+		}
+	}
+
+	var latest db.ServerMetrics
+	err = db.DB.Get(&latest, "SELECT * FROM server_metrics WHERE server_id = ? AND created_at > ? ORDER BY id DESC LIMIT 1", server.Id, time.Now().Add(-time.Second*10).Unix())
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.JSON(http.StatusOK, D{"server": D{"last_report": server.LastReport.Int64, "arch": server.Arch.String, "operating_system": server.OS.String, "cpu": server.Cpu.String, "online": server.LastReport.Valid && time.Since(time.Unix(server.LastReport.Int64, 0)) < time.Second*10}, "metrics": metrics})
+	return c.JSON(http.StatusOK, D{
+		"server": D{
+			"last_report":      server.LastReport.Int64,
+			"arch":             server.Arch.String,
+			"operating_system": server.OS.String,
+			"cpu":              server.Cpu.String,
+			"online":           server.LastReport.Valid && time.Since(time.Unix(server.LastReport.Int64, 0)) < time.Second*10,
+		},
+		"metrics": metrics,
+		"latest":  latest,
+	})
 }

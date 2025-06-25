@@ -46,6 +46,29 @@ CREATE TABLE IF NOT EXISTS server_metrics (
     load_15 REAL NOT NULL
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS server_metrics_10m (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at INTEGER NOT NULL,
+    server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+
+    cpu REAL NOT NULL,
+    memory_percent REAL NOT NULL,
+    memory_used INTEGER NOT NULL,
+    memory_total INTEGER NOT NULL,
+    disk_percent REAL NOT NULL,
+    disk_used INTEGER NOT NULL,
+    disk_total INTEGER NOT NULL,
+    network_out_rate INTEGER NOT NULL,
+    network_in_rate INTEGER NOT NULL,
+    swap_percent REAL NOT NULL,
+    swap_used INTEGER NOT NULL,
+    swap_total INTEGER NOT NULL,
+    uptime INTEGER NOT NULL,
+    load_1 REAL NOT NULL,
+    load_5 REAL NOT NULL,
+    load_15 REAL NOT NULL
+) STRICT;
+
 CREATE TABLE IF NOT EXISTS tokens (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     token TEXT UNIQUE NOT NULL,

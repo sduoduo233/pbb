@@ -148,35 +148,32 @@
                 $("#os").text(json.server.operating_system || "N/A");
                 $("#online").removeClass("text-success text-danger").addClass(json.server.online ? "text-success" : "text-danger");
 
-                if (json.metrics.length > 0) {
-                    $("#uptime").text(formatDuration(json.metrics[0].uptime));
-                    $("#load").text(json.metrics[0].load_1 + " " + json.metrics[0].load_5 + " " + json.metrics[0].load_15);
-                    const latest = json.metrics[0];
-                    if (Date.now() / 1000 - latest.CreatedAt < 10) {
-                        $("#cpu-text").text(latest.cpu.toFixed(1) + "%");
-                        $("#swap-text").text(formatBytes(latest.swap_used) + " / " + formatBytes(latest.swap_total));
-                        $("#mem-text").text(formatBytes(latest.memory_used) + " / " + formatBytes(latest.memory_total));
-                        $("#network-text").text("\uF13A " + formatBytes(latest.network_in_rate) + "/s \uF119 " + formatBytes(latest.network_out_rate) + "/s");
-                        $("#disk-text").text(formatBytes(latest.disk_used) + " / " + formatBytes(latest.disk_total));
-                    } else {
-                        $("#cpu-text").text("N/A");
-                        $("#swap-text").text("N/A");
-                        $("#mem-text").text("N/A");
-                        $("#network-text").text("N/A");
-                        $("#disk-text").text("N/A");
-                    }
+                if (json.server.online) {
+                    $("#uptime").text(formatDuration(json.latest.uptime));
+                    $("#load").text(json.latest.load_1 + " " + json.latest.load_5 + " " + json.latest.load_15);
+                    $("#cpu-text").text(json.latest.cpu.toFixed(1) + "%");
+                    $("#swap-text").text(formatBytes(json.latest.swap_used) + " / " + formatBytes(json.latest.swap_total));
+                    $("#mem-text").text(formatBytes(json.latest.memory_used) + " / " + formatBytes(json.latest.memory_total));
+                    $("#network-text").text("\uF13A " + formatBytes(json.latest.network_in_rate) + "/s \uF119 " + formatBytes(json.latest.network_out_rate) + "/s");
+                    $("#disk-text").text(formatBytes(json.latest.disk_used) + " / " + formatBytes(json.latest.disk_total));
+
                 } else {
                     $("#uptime").text("N/A");
                     $("#load").text("N/A");
+                    $("#cpu-text").text("N/A");
+                    $("#swap-text").text("N/A");
+                    $("#mem-text").text("N/A");
+                    $("#network-text").text("N/A");
+                    $("#disk-text").text("N/A");
                 }
 
-                drawGraph("#graph-cpu", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.cpu, }))}], range);
-                drawGraph("#graph-swap", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.swap_percent, }))}], range, [0, 100]);
-                drawGraph("#graph-mem", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.memory_percent, }))}], range, [0, 100]);
-                drawGraph("#graph-disk", [{data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.disk_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-cpu", [{data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.cpu, }))}], range);
+                drawGraph("#graph-swap", [{data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.swap_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-mem", [{data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.memory_percent, }))}], range, [0, 100]);
+                drawGraph("#graph-disk", [{data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.disk_percent, }))}], range, [0, 100]);
                 drawGraph("#graph-network", [
-                    {data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.network_out_rate / 1024 / 1024, })), label: "Outbound (MB/s)"},
-                    {data: json.metrics.map(m => ({ date: new Date(m.CreatedAt * 1000), value: m.network_in_rate / 1024 / 1024, })), label: "Inbound (MB/s)"},
+                    {data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.network_out_rate / 1024 / 1024, })), label: "Outbound (MB/s)"},
+                    {data: json.metrics.map(m => ({ date: new Date(m.created_at * 1000), value: m.network_in_rate / 1024 / 1024, })), label: "Inbound (MB/s)"},
                 ], range, [
                     0, Math.max(...json.metrics.map(m => m.network_out_rate / 1024 / 1024), ...json.metrics.map(m => m.network_in_rate / 1024 / 1024)) * 1.2
                 ]);
@@ -266,7 +263,7 @@
                         .attr("fill", "none")
                         .attr("stroke", colors[l])
                         .attr("stroke-width", 1.5)
-                        .attr("d", line(segments[i]));
+                        .attr("d", line(structuredClone(segments[i]).reverse()));
                 }
 
                 if (line.label) {

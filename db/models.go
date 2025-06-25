@@ -40,9 +40,9 @@ type ServerWithGroupLabel struct {
 }
 
 type ServerMetrics struct {
-	Id        int32  `db:"id"`
-	CreatedAt uint64 `db:"created_at"`
-	ServerId  int32  `db:"server_id"`
+	Id        int32  `db:"id" json:"id"`
+	CreatedAt uint64 `db:"created_at" json:"created_at"`
+	ServerId  int32  `db:"server_id" json:"server_id"`
 
 	Cpu            float32 `db:"cpu" json:"cpu"`
 	MemoryPercent  float32 `db:"memory_percent" json:"memory_percent"`

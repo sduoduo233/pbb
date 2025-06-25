@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sduoduo233/pbb/controllers"
+	"github.com/sduoduo233/pbb/cron"
 	"github.com/sduoduo233/pbb/db"
 	"github.com/sduoduo233/pbb/html"
 )
@@ -38,6 +39,9 @@ func main() {
 	e.Renderer = &html.TemplateRenderer{
 		Template: html.LoadTemplates(),
 	}
+
+	// cron jobs
+	cron.Init()
 
 	// controllers
 	controllers.Route(e.Group(""))
