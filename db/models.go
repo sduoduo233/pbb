@@ -56,4 +56,8 @@ type ServerMetrics struct {
 	SwapUsed       uint64  `db:"swap_used" json:"swap_used"`
 	SwapTotal      uint64  `db:"swap_total" json:"swap_total"`
 	SwapPercent    float32 `db:"swap_percent" json:"swap_percent"`
+	Uptime         uint64  `db:"uptime" json:"uptime"`
+	Load1          float32 `db:"load_1" json:"load_1"`
+	Load5          float32 `db:"load_5" json:"load_5"`
+	Load15         float32 `db:"load_15" json:"load_15"`
 }

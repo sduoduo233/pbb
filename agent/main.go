@@ -9,28 +9,18 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
+	"github.com/shirou/gopsutil/v4/host"
+	"github.com/shirou/gopsutil/v4/load"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/net"
-)
 
-type ServerMetric struct {
-	Cpu            float32 `json:"cpu"`
-	MemoryPercent  float32 `json:"memory_percent"`
-	MemoryUsed     uint64  `json:"memory_used"`
-	MemoryTotal    uint64  `json:"memory_total"`
-	DiskPercent    float32 `json:"disk_percent"`
-	DiskUsed       uint64  `json:"disk_used"`
-	DiskTotal      uint64  `json:"disk_total"`
-	NetworkOutRate uint64  `json:"network_out_rate"`
-	NetworkInRate  uint64  `json:"network_in_rate"`
-	SwapUsed       uint64  `json:"swap_used"`
-	SwapTotal      uint64  `json:"swap_total"`
-	SwapPercent    float32 `json:"swap_percent"`
-}
+	"github.com/sduoduo233/pbb/controllers/types"
+)
 
 var URL = os.Getenv("AGENT_URL")
 var SECRET = os.Getenv("AGENT_SECRET")
@@ -40,7 +30,17 @@ func main() {
 
 	slog.Warn("reporting to", "url", URL)
 
+	lastReportSystemInfo := time.Unix(0, 0)
+
 	for {
+		if time.Since(lastReportSystemInfo) > time.Minute*10 {
+			err := reportSystemInfo()
+			if err != nil {
+				slog.Error("could not report system info", "err", err)
+			} else {
+				lastReportSystemInfo = time.Now()
+			}
+		}
 
 		m, err := getMetirc()
 		if err != nil {
@@ -49,7 +49,7 @@ func main() {
 			continue
 		}
 
-		err = sendReport(m)
+		err = sendReport(URL+"/metric", m)
 		if err != nil {
 			slog.Error("could not send request", "err", err)
 			time.Sleep(time.Second * 5)
@@ -61,7 +61,7 @@ func main() {
 	}
 }
 
-func sendReport(m *ServerMetric) error {
+func sendReport(url string, m any) error {
 	jsonBytes, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)
@@ -70,7 +70,7 @@ func sendReport(m *ServerMetric) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, URL, bytes.NewReader(jsonBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(jsonBytes))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -99,8 +99,8 @@ var (
 	lastIoCounter *net.IOCountersStat
 )
 
-func getMetirc() (*ServerMetric, error) {
-	m := ServerMetric{}
+func getMetirc() (*types.ServerMetric, error) {
+	m := types.ServerMetric{}
 
 	// cpu
 
@@ -157,5 +157,78 @@ func getMetirc() (*ServerMetric, error) {
 	m.SwapTotal = uint64(swapStat.Total)
 	m.SwapPercent = float32(swapStat.UsedPercent)
 
+	// uptime
+
+	uptime, err := host.Uptime()
+	if err != nil {
+		return nil, fmt.Errorf("uptime: %w", err)
+
+	}
+	m.Uptime = uptime
+
+	// load
+
+	avgStat, err := load.Avg()
+	if err != nil {
+		return nil, fmt.Errorf("load avg: %w", err)
+	}
+	m.Load1 = float32(avgStat.Load1)
+	m.Load5 = float32(avgStat.Load5)
+	m.Load15 = float32(avgStat.Load15)
+
 	return &m, nil
+}
+
+func reportSystemInfo() error {
+	var s types.ServerInfo
+
+	// cpu
+
+	cpuStat, err := cpu.Info()
+	if err != nil {
+		return fmt.Errorf("cpu: %w", err)
+	}
+
+	cpuCores := make(map[string]int)
+	for _, c := range cpuStat {
+		_, ok := cpuCores[c.ModelName]
+		if ok {
+			cpuCores[c.ModelName] += int(c.Cores)
+		} else {
+			cpuCores[c.ModelName] = int(c.Cores)
+		}
+	}
+
+	for k, v := range cpuCores {
+		s.Cpu += k
+		s.Cpu += " (" + strconv.Itoa(v) + " Cores)"
+		s.Cpu += ","
+	}
+	s.Cpu = s.Cpu[:len(s.Cpu)-1]
+
+	// arch
+
+	arch, err := host.KernelArch()
+	if err != nil {
+		return fmt.Errorf("arch: %w", err)
+	}
+	s.Arch = arch
+
+	// os
+
+	platform, _, version, err := host.PlatformInformation()
+	if err != nil {
+		return fmt.Errorf("os: %w", err)
+	}
+
+	s.OS = fmt.Sprintf("%s %s", platform, version)
+
+	// send report
+
+	err = sendReport(URL+"/info", &s)
+	if err != nil {
+		return fmt.Errorf("post: %w", err)
+	}
+
+	return nil
 }

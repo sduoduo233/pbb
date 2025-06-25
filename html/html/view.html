@@ -2,5 +2,248 @@
 {{ template "header" . }}
 
 
+<a href="/" class="text-decoration-none" style="color: inherit;"><i class="bi bi-arrow-left-circle-fill"></i> Back</a>
+
+<h2 class="my-3">{{ .label }}</h2>
+
+<style>
+    [aria-busy="true"] * {
+        display: none;
+    }
+</style>
+
+<article aria-busy="true">
+    <header>Basic</header>
+    <div class="d-flex flex-wrap gap-4 justify-content-start">
+
+        <div class="d-flex flex-column">
+            <span class="text-secondary">CPU</span>
+            <span id="cpu"></span>
+        </div>
+
+        <div class="d-flex flex-column">
+            <span class="text-secondary">Uptime</span>
+            <span id="uptime"></span>
+        </div>
+
+        <div class="d-flex flex-column">
+            <span class="text-secondary">Arch</span>
+            <span id="arch"></span>
+        </div>
+
+        <div class="d-flex flex-column">
+            <span class="text-secondary">OS</span>
+            <span id="os"></span>
+        </div>
+
+        <div class="d-flex flex-column">
+            <span class="text-secondary">Load</span>
+            <span id="load"></span>
+        </div>
+
+    </div>
+</article>
+
+<select id="range" value="300" class="w-auto">
+    <option value="300">5 Minutes</option>
+    <option value="7200">2 Hours</option>
+    <option value="86400">24 Hours</option>
+    <option value="259200">3 Days</option>
+    <option value="604800">7 Days</option>
+</select>
+
+
+<div class="row mt-4">
+
+    <div class="col-12 col-lg-6">
+        <article aria-busy="true">
+            <header>CPU</header>
+            <div id="graph-cpu"></div>
+        </article>
+
+    </div>
+    <div class="col-12 col-lg-6">
+        <article aria-busy="true">
+            <header>Swap</header>
+            <div id="graph-swap"></div>
+        </article>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <article aria-busy="true">
+            <header>Memory</header>
+            <div id="graph-mem"></div>
+        </article>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <article aria-busy="true">
+            <header>Disk</header>
+            <div id="graph-disk"></div>
+        </article>
+    </div>
+
+</div>
+
+
+<script>
+
+    $(function () {
+        function formatDuration(d) {
+            if (d >= 60 * 60 * 24 * 365) {
+                const months = Math.floor((d % (60 * 60 * 24 * 365)) / (60 * 60 * 24 * 365) * 12);
+                if (months > 0) {
+                    return Math.floor(d / (60 * 60 * 24 * 365)) + " years " + months + " months";
+                }
+                return Math.floor(d / (60 * 60 * 24 * 365)) + " years";
+            }
+            if (d >= 60 * 60 * 24) {
+                return Math.floor(d / (60 * 60 * 24)) + " days";
+            }
+            if (d >= 60 * 60) {
+                return Math.floor(d / (60 * 60)) + " hours";
+            }
+            if (d >= 60) {
+                return Math.floor(d / 60) + " minutes";
+            }
+            return d + " seconds";
+        }
+
+        let reloadTimeout = -1;
+        async function reload() {
+            try {
+                const range = parseInt($("#range").val());
+
+                const resp = await fetch("/servers/{{ .id }}/data?duration=" + range, { signal: AbortSignal.timeout(5000) });
+                if (resp.status !== 200) throw new Error("bad status: " + resp.statusText);
+
+                $("[aria-busy=\"true\"]").attr("aria-busy", null);
+
+                const json = await resp.json();
+
+                $("#cpu").text(json.server.cpu || "N/A");
+                $("#arch").text(json.server.arch || "N/A");
+                $("#os").text(json.server.operating_system || "N/A");
+
+                if (json.metrics.length > 0) {
+                    $("#uptime").text(formatDuration(json.metrics[0].uptime));
+                    $("#load").text(json.metrics[0].load_1 + " " + json.metrics[0].load_5 + " " + json.metrics[0].load_15);
+                } else {
+                    $("#uptime").text("N/A");
+                    $("#load").text("N/A");
+                }
+
+                drawGraph("#graph-cpu", json.metrics.map(m => ({
+                    date: new Date(m.CreatedAt * 1000),
+                    value: m.cpu,
+                })), range);
+                drawGraph("#graph-swap", json.metrics.map(m => ({
+                    date: new Date(m.CreatedAt * 1000),
+                    value: m.swap_percent,
+                })), range);
+                drawGraph("#graph-mem", json.metrics.map(m => ({
+                    date: new Date(m.CreatedAt * 1000),
+                    value: m.memory_percent,
+                })), range);
+                drawGraph("#graph-disk", json.metrics.map(m => ({
+                    date: new Date(m.CreatedAt * 1000),
+                    value: m.disk_percent,
+                })), range);
+
+            } catch (e) {
+                console.error("reload error", e);
+            } finally {
+                reloadTimeout = setTimeout(reload, 3000);
+            }
+        }
+
+        reload();
+
+        $("#range").on("change", function () {
+            clearTimeout(reloadTimeout);
+            reload()
+        })
+
+        function drawGraph(container, data, range, rangeY = [0, 100]) {
+
+            const width = $(container).width();
+            const height = 200;
+            const margin = 20;
+
+            const x = d3.scaleUtc()
+                .domain([new Date(Date.now() - range * 1000), new Date()])
+                .range([margin, width - margin]);
+
+            const y = d3.scaleLinear()
+                .domain(rangeY)
+                .range([height - margin, margin]);
+
+            const svg = d3.create("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            let timeFormat = "%H:%M";
+            let ticks = d3.timeMinute.every(1);
+            if (range === 7200) { // 2 hours
+                ticks = d3.timeMinute.every(20);
+            } else if (range === 86400) { // 24 hours
+                ticks = d3.timeHour.every(4);
+            } else if (range === 259200) { // 3 days
+                timeFormat = "%H:%M";
+                ticks = d3.timeHour.every(12);
+            } else if (range === 604800) { // 7 days
+                timeFormat = "%b %d";
+                ticks = d3.timeHour.every(24);
+            }
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height - margin})`)
+                .call(d3.axisBottom(x).ticks(ticks).tickSizeOuter(0).tickFormat(d3.timeFormat(timeFormat)))
+            // .selectAll("text")
+            // .attr("x", -20)
+            // .attr("y", 5)
+            // .attr("transform", "rotate(-45)");
+
+            svg.append("g")
+                .attr("transform", `translate(${margin},0)`)
+                .call(d3.axisLeft(y).ticks(2).tickSizeInner(0))
+                .call(g => g.select(".domain").remove());
+
+            // cut the line if the gap is greater than 10 seconds
+            let segments = [[]];
+            for (let i = 0; i < data.length; i++) {
+                let lastSegment = segments[segments.length - 1];
+                if (lastSegment.length === 0) {
+                    lastSegment.push(data[i]);
+                    continue;
+                }
+                if (lastSegment[lastSegment.length - 1].date - data[i].date >= 10 * 1000) {
+                    segments.push([data[i]]);
+                } else {
+                    lastSegment.push(data[i]);
+                }
+            }
+
+            for (let i = 0; i < segments.length; i++) {
+                const line = d3.line()
+                    .x(d => x(d.date))
+                    .y(d => y(d.value));
+
+                svg.append("path")
+                    .attr("fill", "none")
+                    .attr("stroke", "steelblue")
+                    .attr("stroke-width", 1.5)
+                    .attr("d", line(segments[i]));
+            }
+
+            $(container).children().remove();
+            $(container).append(svg.node());
+        }
+    })
+
+
+
+</script>
+
 {{ template "footer" . }}
 {{ end }}

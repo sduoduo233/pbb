@@ -68,7 +68,7 @@ func indexServers(c echo.Context) error {
 		}
 
 		var dbServers []db.Server
-		err = db.DB.Select(&dbServers, "SELECT * FROM servers WHERE (NOT hidden OR ?) AND (group_id = ? OR (? < 0 AND group_id = NULL))", showHidden, dbGroup.Id, dbGroup.Id)
+		err = db.DB.Select(&dbServers, "SELECT * FROM servers WHERE (NOT hidden OR ?) AND (group_id = ? OR (? < 0 AND group_id IS NULL))", showHidden, dbGroup.Id, dbGroup.Id)
 		if err != nil {
 			return fmt.Errorf("db: %w", err)
 		}

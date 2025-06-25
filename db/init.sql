@@ -39,7 +39,11 @@ CREATE TABLE IF NOT EXISTS server_metrics (
     network_in_rate INTEGER NOT NULL,
     swap_percent REAL NOT NULL,
     swap_used INTEGER NOT NULL,
-    swap_total INTEGER NOT NULL
+    swap_total INTEGER NOT NULL,
+    uptime INTEGER NOT NULL,
+    load_1 REAL NOT NULL,
+    load_5 REAL NOT NULL,
+    load_15 REAL NOT NULL
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS tokens (
