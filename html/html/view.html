@@ -58,35 +58,35 @@
 
     <div class="col-12 col-lg-6">
         <article aria-busy="true">
-            <header>CPU</header>
+            <header class="d-flex justify-content-between">CPU<span id="cpu-text" class="text-secondary"></span></header>
             <div id="graph-cpu"></div>
         </article>
 
     </div>
     <div class="col-12 col-lg-6">
         <article aria-busy="true">
-            <header>Swap</header>
+            <header class="d-flex justify-content-between">Swap<span id="swap-text" class="text-secondary"></span></header>
             <div id="graph-swap"></div>
         </article>
     </div>
 
     <div class="col-12 col-lg-6">
         <article aria-busy="true">
-            <header>Memory</header>
+            <header class="d-flex justify-content-between">Memory<span id="mem-text" class="text-secondary"></span></header>
             <div id="graph-mem"></div>
         </article>
     </div>
 
     <div class="col-12 col-lg-6">
         <article aria-busy="true">
-            <header>Network</header>
+            <header class="d-flex justify-content-between">Network<span id="network-text" class="text-secondary" style="font-family: bootstrap-icons, var(--pico-font-family);"></span></header>
             <div id="graph-network"></div>
         </article>
     </div>
 
     <div class="col-12 col-lg-6">
         <article aria-busy="true">
-            <header>Disk</header>
+            <header class="d-flex justify-content-between">Disk<span id="disk-text" class="text-secondary"></span></header>
             <div id="graph-disk"></div>
         </article>
     </div>
@@ -117,6 +117,21 @@
             return d + " seconds";
         }
 
+        function formatBytes(b) {
+            const unit = 1024;
+            if (b < unit) {
+                return `${b} B`;
+            }
+            let div = unit;
+            let exp = 0;
+            for (let n = Math.floor(b / unit); n >= unit; n = Math.floor(n / unit)) {
+                div *= unit;
+                exp++;
+            }
+            const pre = "KMGTPE".charAt(exp);
+            return `${(b / div).toFixed(1)} ${pre}iB`;
+        }
+        
         async function reload() {
             try {
                 const range = parseInt($("#range").val());
@@ -136,7 +151,20 @@
                 if (json.metrics.length > 0) {
                     $("#uptime").text(formatDuration(json.metrics[0].uptime));
                     $("#load").text(json.metrics[0].load_1 + " " + json.metrics[0].load_5 + " " + json.metrics[0].load_15);
-                    
+                    const latest = json.metrics[0];
+                    if (Date.now() / 1000 - latest.CreatedAt < 10) {
+                        $("#cpu-text").text(latest.cpu.toFixed(1) + "%");
+                        $("#swap-text").text(formatBytes(latest.swap_used) + " / " + formatBytes(latest.swap_total));
+                        $("#mem-text").text(formatBytes(latest.memory_used) + " / " + formatBytes(latest.memory_total));
+                        $("#network-text").text("\uF13A " + formatBytes(latest.network_in_rate) + "/s \uF119 " + formatBytes(latest.network_out_rate) + "/s");
+                        $("#disk-text").text(formatBytes(latest.disk_used) + " / " + formatBytes(latest.disk_total));
+                    } else {
+                        $("#cpu-text").text("N/A");
+                        $("#swap-text").text("N/A");
+                        $("#mem-text").text("N/A");
+                        $("#network-text").text("N/A");
+                        $("#disk-text").text("N/A");
+                    }
                 } else {
                     $("#uptime").text("N/A");
                     $("#load").text("N/A");
