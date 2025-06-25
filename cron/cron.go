@@ -8,7 +8,7 @@ func Init() {
 		panic(err)
 	}
 
-	s.NewJob(gocron.CronJob("*/1 * * * *", false), gocron.NewTask(sample))
+	s.NewJob(gocron.CronJob("*/10 * * * *", false), gocron.NewTask(sample))
 	s.NewJob(gocron.CronJob("*/30 * * * *", false), gocron.NewTask(clean))
 
 	s.Start()

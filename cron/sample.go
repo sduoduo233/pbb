@@ -30,7 +30,7 @@ func sample() {
 			0.0 as load_5,
 			0.0 as load_15
 		FROM server_metrics WHERE created_at > ? GROUP BY server_id`,
-		time.Now().Add(-1*time.Minute).Unix(),
+		time.Now().Add(-10*time.Minute).Unix(),
 	)
 	if err != nil {
 		slog.Error("sample server_metrics", "err", err)
