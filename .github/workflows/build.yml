@@ -30,7 +30,7 @@ jobs:
       run: docker build . --tag builder --platform linux/amd64,linux/arm64 --load
       
     - name: Build amd64
-      run: docker run -v .:/app --rm builder --platform linux/amd64 bash build.sh
+      run: docker run -v .:/app --rm --platform linux/amd64 builder bash build.sh
 
     - uses: actions/upload-artifact@v4
       with:
@@ -43,7 +43,7 @@ jobs:
         path: bin/agent
 
     - name: Build arm64
-      run: docker run -v .:/app --rm builder --platform linux/arm64 bash build.sh
+      run: docker run -v .:/app --rm --platform linux/arm64 builder bash build.sh
 
     - uses: actions/upload-artifact@v4
       with:
