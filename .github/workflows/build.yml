@@ -14,7 +14,7 @@ jobs:
 
     - name: Config Docker
       run: |
-        echo "{ 'features': { 'containerd-snapshotter': true  } }" | sudo tee /etc/docker/daemon.json
+        echo '{ "features": { "containerd-snapshotter": true  } }' | sudo tee /etc/docker/daemon.json
         sudo systemctl restart docker
 
 
