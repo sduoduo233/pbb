@@ -21,7 +21,7 @@ jobs:
         install: true
     
     - name: Build the Docker image
-      run: docker build . --tag builder --platform linux/amd64,linux/arm64 --output type=docker
+      run: docker build . --tag builder --platform linux/amd64,linux/arm64 --load
       
     - name: Build amd64
       run: docker run -v .:/app --rm builder --platform linux/amd64 bash build.sh
