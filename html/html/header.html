@@ -44,5 +44,11 @@
         </article>
         {{ end }}
 
+        {{ if .success }}
+        <article class="pico-background-green-500" role="alert">
+            {{ .success }}
+        </article>
+        {{ end }}
+
 
 {{ end }}

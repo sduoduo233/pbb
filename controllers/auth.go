@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -43,12 +42,7 @@ func doLogin(c echo.Context) error {
 
 	// compare password
 
-	hashed, err := hex.DecodeString(u.Password)
-	if err != nil {
-		return fmt.Errorf("bad password hash: %w", err)
-	}
-
-	err = bcrypt.CompareHashAndPassword(hashed, []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
 		return c.Render(http.StatusOK, "login", D{"title": "Login", "error": "Wrong email or password"})
 	}

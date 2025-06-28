@@ -46,7 +46,7 @@
                 <td>
                     {{ template "delete_button" (printf "/dashboard/servers/%d" .Id) }}
                     <a href="/dashboard/servers/edit/{{ .Id }}"><button>Edit</button></a>
-                    <a href="/dashboard/servers/view/{{ .Id }}"><button>View</button></a>
+                    <a href="/servers/{{ .Id }}"><button>View</button></a>
                 </td>
             </tr>
             {{ end }}

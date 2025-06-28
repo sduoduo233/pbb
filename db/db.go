@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/hex"
 	"log/slog"
 
 	_ "embed"
@@ -43,7 +42,7 @@ func Init() {
 		if err != nil {
 			panic(err)
 		}
-		_, err = DB.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", "admin@example.com", hex.EncodeToString(hashed))
+		_, err = DB.Exec("INSERT INTO users (email, password) VALUES ($1, $2)", "admin@example.com", string(hashed))
 		if err != nil {
 			panic(err)
 		}

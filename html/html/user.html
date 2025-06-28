@@ -1,0 +1,37 @@
+{{ define "user" }}
+{{ template "header" . }}
+
+{{ template "dashboard_header" . }}
+
+<form action="/dashboard/user" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Email
+        <input type="text" placeholder="Email" required name="email" value="{{ or .post.email .email }}">
+    </label>
+
+    <p>Leave the following fields empty if you don't want to change your password.</p>
+
+    <label>
+        Current password
+        <input type="password" name="current">
+    </label>
+
+    <label>
+        New password
+        <input type="password" name="password1">
+    </label>
+
+    <label>
+        Confirm password
+        <input type="password" name="password2">
+    </label>
+    
+    <button>Save</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}
