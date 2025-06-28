@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build the Docker image
+      run: docker build . --tag builder --platform linux/amd64,linux/arm64
+      
+    - name: Build amd64
+      run: docker run -v .:/app --rm builder --platform linux/amd64 bash build.sh
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: hub-amd64
+        path: bin/hub
+    
+    - uses: actions/upload-artifact@v4
+      with:
+        name: agent-amd64
+        path: bin/agent
+
+    - name: Build arm64
+      run: docker run -v .:/app --rm builder --platform linux/arm64 bash build.sh
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: agent-arm64
+        path: bin/agent
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: hub-arm64
+        path: bin/hub
