@@ -12,6 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Config Docker
+      run: "echo \"{ 'features': { 'containerd-snapshotter': true  } }\" | sudo tee /etc/docker/daemon.json"
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
       
