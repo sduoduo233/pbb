@@ -51,4 +51,6 @@ jobs:
         open -u ftpuser,$FTP_PASSWORD $FTP_HOST
         cd /var/www/execli
         mput ./*
+        put ../scripts/install-agent.sh -o install-agent.sh
+        put ../scripts/install-hub.sh -o install-hub.sh
         EOF
