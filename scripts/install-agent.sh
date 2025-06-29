@@ -5,6 +5,13 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+agnet_url="$1"
+agent_secret="$2"
+if [ -z "$agnet_url" ] || [ -z "$agent_secret" ]; then
+    echo "Usage: $0 <agent_url> <agent_secret>"
+    exit 1
+fi
+
 uname=$(uname -m)
 case $uname in
     x86_64)
@@ -33,6 +40,11 @@ curl -L "$binary_url" > /opt/pbb/agent
 echo "> Setting permissions for /opt/pbb/agent"
 chmod +x /opt/pbb/agent
 
+echo "> Writing environment variables to /opt/pbb/.env"
+echo "AGENT_URL=$agnet_url" > /opt/pbb/.env
+echo "AGENT_SECRET=$agent_secret" >> /opt/pbb/.env
+chmod 600 /opt/pbb/.env
+
 is_systemd=$(command -v systemctl)
 is_openrc=$(command -v rc-status)
 
@@ -48,7 +60,7 @@ After=network.target
 Type=simple
 ExecStart=/opt/pbb/agent
 Restart=on-failure
-User=nobody
+User=root
 WorkingDirectory=/opt/pbb
 
 [Install]

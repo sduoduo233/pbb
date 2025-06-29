@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
@@ -26,6 +27,11 @@ var URL = os.Getenv("AGENT_URL")
 var SECRET = os.Getenv("AGENT_SECRET")
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		slog.Warn("could not load .env file", "err", err)
+	}
+
 	slog.Warn("agent")
 
 	slog.Warn("reporting to", "url", URL)
