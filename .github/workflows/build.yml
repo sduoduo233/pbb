@@ -10,47 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+
     - uses: actions/checkout@v4
 
-    - name: Config Docker
+    - name: Install dependencies
       run: |
-        echo '{ "features": { "containerd-snapshotter": true  } }' | sudo tee /etc/docker/daemon.json
-        sudo systemctl restart docker
+        sudo apt-get update
+        sudo apt-get install -y build-essential gcc-aarch64-linux-gnu
 
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+    - uses: actions/setup-go@v5
       with:
-        install: true
-    
-    - name: Build the Docker image
-      run: docker build . --tag builder --platform linux/amd64,linux/arm64 --load
-      
-    - name: Build amd64
-      run: docker run -v .:/app --rm --platform linux/amd64 builder bash build.sh
+        go-version: '1.24'
+
+    - name: Build hub
+      run: |
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc go build -ldflags '-s -w -linkmode external -extldflags "-static"' -tags sqlite_omit_load_extension -trimpath -o bin/hub-amd64 .
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -ldflags '-s -w -linkmode external -extldflags "-static"' -tags sqlite_omit_load_extension -trimpath -o bin/hub-arm64 .
+        
+
+    - name: Build agent
+      run: |
+        CGO_ENABLED=0 GOARCH=386 go build -o bin/agent-386 -trimpath -ldflags '-s -w' ./agent
+        CGO_ENABLED=0 GOARCH=amd64 go build -o bin/agent-amd64 -trimpath -ldflags '-s -w' ./agent
+        CGO_ENABLED=0 GOARCH=arm64 go build -o bin/agent-arm64 -trimpath -ldflags '-s -w' ./agent
+        CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -o bin/agent-arm32-v7a -trimpath -ldflags '-s -w' ./agent
 
     - uses: actions/upload-artifact@v4
       with:
-        name: hub-amd64
-        path: bin/hub
-    
-    - uses: actions/upload-artifact@v4
-      with:
-        name: agent-amd64
-        path: bin/agent
-
-    - name: Build arm64
-      run: docker run -v .:/app --rm --platform linux/arm64 builder bash build.sh
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: agent-arm64
-        path: bin/agent
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: hub-arm64
-        path: bin/hub
+        name: bin
+        path: bin
