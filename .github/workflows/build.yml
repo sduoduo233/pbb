@@ -39,3 +39,16 @@ jobs:
       with:
         name: bin
         path: bin
+
+    - name: Upload binary
+      env:
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        FTP_HOST: ${{ secrets.FTP_HOST }}
+      working-directory: ./bin
+      run: |
+        lftp <<EOF
+        set ftp:ssl-allow true
+        open -u ftpuser,$FTP_PASSWORD $FTP_HOST
+        cd /var/www/execli
+        mput ./*
+        EOF
