@@ -53,5 +53,4 @@ jobs:
         mput ./*
         put ../scripts/install-agent.sh -o install-agent.sh
         put ../scripts/install-hub.sh -o install-hub.sh
-        chmod 644 /var/www/execli/*
         EOF
