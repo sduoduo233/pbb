@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/sduoduo233/pbb/controllers"
+	"github.com/sduoduo233/pbb/db"
 )
 
 //go:embed html/*
@@ -45,7 +46,15 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 	// login state
 	dataMap["login"] = controllers.GetUser(c) != nil
 
-	return t.Template.ExecuteTemplate(w, name, data)
+	// site name
+	var siteName string
+	err := db.DB.Get(&siteName, "SELECT value FROM settings WHERE key = 'site_name'")
+	if err != nil {
+		return fmt.Errorf("render template: get site name: %w", err)
+	}
+	dataMap["site_name"] = siteName
+
+	return t.Template.ExecuteTemplate(w, name, dataMap)
 }
 
 func LoadTemplates() *template.Template {

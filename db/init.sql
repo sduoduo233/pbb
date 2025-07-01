@@ -75,3 +75,13 @@ CREATE TABLE IF NOT EXISTS tokens (
     user_id INTEGER NOT NULL REFERENCES users(id),
     created_at INTEGER NOT NULL
 ) STRICT;
+
+CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key TEXT UNIQUE NOT NULL,
+    value TEXT NOT NULL
+) STRICT;
+
+INSERT OR IGNORE INTO settings (key, value) VALUES
+    ('public_url', 'http://localhost:3005'),
+    ('site_name', 'pbb');

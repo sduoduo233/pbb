@@ -61,3 +61,9 @@ type ServerMetrics struct {
 	Load5          float32 `db:"load_5" json:"load_5"`
 	Load15         float32 `db:"load_15" json:"load_15"`
 }
+
+type Setting struct {
+	Id    int32  `db:"id"`
+	Key   string `db:"key"`
+	Value string `db:"value"`
+}

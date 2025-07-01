@@ -1,0 +1,25 @@
+{{ define "settings" }}
+{{ template "header" . }}
+
+{{ template "dashboard_header" . }}
+
+<form action="/dashboard/settings" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Public URL
+        <input type="text" placeholder="text" required name="public_url" value="{{ .settings.public_url }}">
+    </label>
+
+    <label>
+        Site Name
+        <input type="text" placeholder="text" required name="site_name" value="{{ .settings.site_name }}">
+    </label>
+
+        <button>Save</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}

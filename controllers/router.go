@@ -45,6 +45,9 @@ func Route(g *echo.Group) {
 	g.GET("/dashboard/user", user, mustAuth)
 	g.POST("/dashboard/user", doChangePassword, mustAuth)
 
+	g.GET("/dashboard/settings", settings, mustAuth)
+	g.POST("/dashboard/settings", doUpdateSettings, mustAuth)
+
 	// agent reporting
 
 	g.POST("/agent/metric", metrics)
