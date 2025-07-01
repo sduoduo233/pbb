@@ -29,8 +29,8 @@ curl -L "$binary_url" > /opt/pbb/hub
 echo "> Setting permissions for /opt/pbb/hub"
 chmod +x /opt/pbb/hub
 
-is_systemd=$(command -v systemctl)
-is_openrc=$(command -v rc-status)
+is_systemd=$(command -v systemctl || true)
+is_openrc=$(command -v rc-status || true)
 
 if [ "$is_systemd" ]; then
 

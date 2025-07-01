@@ -47,8 +47,8 @@ echo "AGENT_URL=$agnet_url" > /opt/pbb/.env
 echo "AGENT_SECRET=$agent_secret" >> /opt/pbb/.env
 chmod 600 /opt/pbb/.env
 
-is_systemd=$(command -v systemctl)
-is_openrc=$(command -v rc-status)
+is_systemd=$(command -v systemctl || true)
+is_openrc=$(command -v rc-status || true)
 
 if [ "$is_systemd" ]; then
 
