@@ -26,6 +26,12 @@ jobs:
       with:
         go-version: '1.24'
 
+    - name: Set version
+      id: version
+      run: |
+        echo "${GITHUB_SHA::8}" > ./update/version.txt
+        cat ./update/version.txt
+
     - name: Build hub
       run: |
         GOOS=linux GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-linux-gnu-gcc go build -ldflags '-s -w -linkmode external -extldflags "-static"' -tags sqlite_omit_load_extension -trimpath -o bin/hub-amd64 .

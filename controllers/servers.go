@@ -13,7 +13,7 @@ import (
 
 func servers(c echo.Context) error {
 	servers := make([]db.ServerWithGroupLabel, 0)
-	err := db.DB.Select(&servers, "SELECT s.id, s.label, s.group_id, s.hidden, s.last_report, g.label as group_label FROM servers AS s LEFT JOIN groups AS g ON s.group_id = g.id ORDER BY s.id ASC")
+	err := db.DB.Select(&servers, "SELECT s.id, s.label, s.group_id, s.hidden, s.last_report, g.label as group_label, s.version FROM servers AS s LEFT JOIN groups AS g ON s.group_id = g.id ORDER BY s.id ASC")
 	if err != nil {
 		return fmt.Errorf("db: %w", err)
 	}

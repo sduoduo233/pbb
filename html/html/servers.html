@@ -17,6 +17,7 @@
                 <th>Group</th>
                 <th>Hidden</th>
                 <th>Last report</th>
+                <th>Version</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -42,6 +43,9 @@
                     {{ else }}
                     No report
                     {{ end }}
+                </td>
+                <td>
+                    {{ if .Version.Valid }} {{ .Version.String }} {{ else }} Unknown {{ end }}
                 </td>
                 <td>
                     {{ template "delete_button" (printf "/dashboard/servers/%d" .Id) }}

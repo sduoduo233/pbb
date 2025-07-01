@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/sduoduo233/pbb/controllers"
 	"github.com/sduoduo233/pbb/db"
+	"github.com/sduoduo233/pbb/update"
 )
 
 //go:embed html/*
@@ -53,6 +54,9 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 		return fmt.Errorf("render template: get site name: %w", err)
 	}
 	dataMap["site_name"] = siteName
+
+	// version
+	dataMap["version"] = update.CURRENT_VERSION
 
 	return t.Template.ExecuteTemplate(w, name, dataMap)
 }

@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS servers (
 
     arch TEXT,
     operating_system TEXT,
-    cpu TEXT
+    cpu TEXT,
+    version TEXT
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS server_metrics (

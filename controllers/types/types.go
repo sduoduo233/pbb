@@ -20,7 +20,8 @@ type ServerMetric struct {
 }
 
 type ServerInfo struct {
-	Cpu  string `json:"cpu"`
-	Arch string `json:"arch"`
-	OS   string `json:"operating_system"`
+	Cpu     string `json:"cpu"`
+	Arch    string `json:"arch"`
+	OS      string `json:"operating_system"`
+	Version string `json:"version"`
 }

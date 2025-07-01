@@ -67,7 +67,7 @@ func systemInfo(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request: "+err.Error())
 	}
 
-	_, err = db.DB.Exec("UPDATE servers SET arch = ?, operating_system = ?, cpu = ? WHERE id = ?", i.Arch, i.OS, i.Cpu, s.Id)
+	_, err = db.DB.Exec("UPDATE servers SET arch = ?, operating_system = ?, cpu = ?, version = ? WHERE id = ?", i.Arch, i.OS, i.Cpu, i.Version, s.Id)
 	if err != nil {
 		return fmt.Errorf("db: %w", err)
 	}

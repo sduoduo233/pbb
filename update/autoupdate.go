@@ -1,6 +1,7 @@
 package update
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"log/slog"
@@ -9,6 +10,9 @@ import (
 	"os/exec"
 	"path"
 )
+
+//go:embed version.txt
+var CURRENT_VERSION string
 
 func AutoUpdate(installScript string) error {
 	slog.Info("auto update begin", "script", installScript)

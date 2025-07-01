@@ -203,6 +203,8 @@ func getMetirc() (*types.ServerMetric, error) {
 func reportSystemInfo() error {
 	var s types.ServerInfo
 
+	s.Version = update.CURRENT_VERSION
+
 	// cpu
 
 	cpuStat, err := cpu.Info()

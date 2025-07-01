@@ -29,9 +29,10 @@ type Server struct {
 	LastReport sql.NullInt64 `db:"last_report"`
 	Secret     string        `db:"secret"`
 
-	Arch sql.NullString `db:"arch"`
-	OS   sql.NullString `db:"operating_system"`
-	Cpu  sql.NullString `db:"cpu"`
+	Arch    sql.NullString `db:"arch"`
+	OS      sql.NullString `db:"operating_system"`
+	Cpu     sql.NullString `db:"cpu"`
+	Version sql.NullString `db:"version"`
 }
 
 type ServerWithGroupLabel struct {
