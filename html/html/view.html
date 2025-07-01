@@ -239,7 +239,7 @@
                 const line = lines[l];
                 const data = line.data;
 
-                // cut the line if the gap is greater than 10 seconds
+                // cut the line if the gap is greater than 10 seconds or 15 minutes
                 let segments = [[]];
                 for (let i = 0; i < data.length; i++) {
                     let lastSegment = segments[segments.length - 1];
@@ -247,7 +247,10 @@
                         lastSegment.push(data[i]);
                         continue;
                     }
-                    if (lastSegment[lastSegment.length - 1].date - data[i].date >= 10 * 1000) {
+                    if (
+                        (lastSegment[lastSegment.length - 1].date - data[i].date >= 10 * 1000 && range < 7200) ||
+                        (lastSegment[lastSegment.length - 1].date - data[i].date >= 15 * 60 * 1000 && range >= 7200)
+                    ) {
                         segments.push([data[i]]);
                     } else {
                         lastSegment.push(data[i]);
