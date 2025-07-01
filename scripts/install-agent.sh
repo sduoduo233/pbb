@@ -85,6 +85,8 @@ elif [ "$is_openrc" ]; then
 #!/sbin/openrc-run
 description="PBB Agent Service"
 command="/opt/pbb/agent"
+command_background=true
+pidfile="/run/pbb-agent.pid"
 directory="/opt/pbb"
 depend() {
     need net
