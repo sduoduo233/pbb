@@ -72,7 +72,7 @@ EOF
     echo "> Starting systemd service"
     systemctl daemon-reload
     systemctl enable pbb-agent.service
-    systemctl start pbb-agent.service
+    systemctl restart pbb-agent.service
 
 elif [ "$is_openrc" ]; then
 
@@ -93,7 +93,7 @@ EOF
     chmod +x /etc/init.d/pbb-agent
     rc-update add pbb-agent default
 
-    /etc/init.d/pbb-agent start
+    /etc/init.d/pbb-agent restart
 
 else
     echo "Neither systemd nor OpenRC found. Please create a service file manually."

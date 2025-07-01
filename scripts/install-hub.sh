@@ -54,7 +54,7 @@ EOF
     echo "> Starting systemd service"
     systemctl daemon-reload
     systemctl enable pbb-hub.service
-    systemctl start pbb-hub.service
+    systemctl restart pbb-hub.service
 
 elif [ "$is_openrc" ]; then
 
@@ -75,7 +75,7 @@ EOF
     chmod +x /etc/init.d/pbb-hub
     rc-update add pbb-hub default
 
-    /etc/init.d/pbb-hub start
+    /etc/init.d/pbb-hub restart
 
 else
     echo "Neither systemd nor OpenRC found. Please create a service file manually."

@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/joho/godotenv"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
@@ -21,6 +22,7 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 
 	"github.com/sduoduo233/pbb/controllers/types"
+	"github.com/sduoduo233/pbb/update"
 )
 
 var URL = os.Getenv("AGENT_URL")
@@ -35,6 +37,19 @@ func main() {
 	slog.Warn("agent")
 
 	slog.Warn("reporting to", "url", URL)
+
+	// auto update
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		panic(err)
+	}
+	s.NewJob(gocron.CronJob("0 3 * * *", false), gocron.NewTask(func() {
+		err := update.AutoUpdate("https://dl.exec.li/install-agent.sh")
+		if err != nil {
+			slog.Error("auto update error", "error", err)
+		}
+	}))
+	s.Start()
 
 	lastReportSystemInfo := time.Unix(0, 0)
 
