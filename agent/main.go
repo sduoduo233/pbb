@@ -25,14 +25,17 @@ import (
 	"github.com/sduoduo233/pbb/update"
 )
 
-var URL = os.Getenv("AGENT_URL")
-var SECRET = os.Getenv("AGENT_SECRET")
+var URL string
+var SECRET string
 
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		slog.Warn("could not load .env file", "err", err)
 	}
+
+	URL = os.Getenv("AGENT_URL")
+	SECRET = os.Getenv("AGENT_SECRET")
 
 	slog.Warn("agent")
 
