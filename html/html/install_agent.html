@@ -1,0 +1,22 @@
+{{ define "install_agent" }}
+{{ template "header" . }}
+
+<h1>Install Agent</h1>
+
+
+<p>Run the following command to install agent:</p>
+
+<pre><code id="code">curl --silent --show-error https://dl.exec.li/install-agent.sh "{{ .public_url }}/agent" "{{ .secret }}" > install-agent.sh && bash install-agent.sh</code></pre>
+
+<button id="btn">Copy</button>
+
+<script>
+    $(function() {
+        $("#btn").click(function() {
+            navigator.clipboard.writeText($("#code").text())
+        });
+    })
+</script>
+
+{{ template "footer" . }}
+{{ end }}

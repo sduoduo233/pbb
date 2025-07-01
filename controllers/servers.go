@@ -136,3 +136,24 @@ func deleteServer(c echo.Context) error {
 
 	return c.String(http.StatusOK, "OK")
 }
+
+func installAgent(c echo.Context) error {
+	id := c.Param("id")
+
+	var secret string
+	err := db.DB.Get(&secret, "SELECT secret FROM servers WHERE id = ?", id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.Render(http.StatusNotFound, "error", D{"error": "Server Not Found"})
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	var publicUrl string
+	err = db.DB.Get(&publicUrl, "SELECT value FROM settings WHERE key = 'public_url'")
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.Render(http.StatusOK, "install_agent", D{"title": "Install Agent", "secret": secret, "public_url": publicUrl})
+}
