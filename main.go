@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"slices"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -23,16 +24,20 @@ func main() {
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
-				slog.Info("request", "method", v.Method, "uri", v.URI, "status", v.Status)
+				// ignore polling requests
+				if !slices.Contains([]string{"/agent/metric", "/agent/info", "/servers", "/servers/:id/data"}, v.RoutePath) {
+					slog.Info("request", "method", v.Method, "uri", v.URI, "status", v.Status)
+				}
 			} else {
 				slog.Info("request", "method", v.Method, "uri", v.URI, "status", v.Status, "error", v.Error)
 			}
 			return nil
 		},
-		LogMethod: true,
-		LogURI:    true,
-		LogStatus: true,
-		LogError:  true,
+		LogMethod:    true,
+		LogURI:       true,
+		LogStatus:    true,
+		LogError:     true,
+		LogRoutePath: true,
 	}))
 
 	// template
