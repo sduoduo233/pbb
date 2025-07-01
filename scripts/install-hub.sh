@@ -68,6 +68,8 @@ elif [ "$is_openrc" ]; then
 description="PBB Hub Service"
 command="/opt/pbb/hub"
 directory="/opt/pbb"
+command_background=true
+pidfile="/run/pbb-hub.pid"
 depend() {
     need net
 }
