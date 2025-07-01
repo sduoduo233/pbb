@@ -63,4 +63,5 @@ jobs:
         mput ./*
         put ../scripts/install-agent.sh -o install-agent.sh
         put ../scripts/install-hub.sh -o install-hub.sh
+        put ./update/version.txt -o version.txt
         EOF

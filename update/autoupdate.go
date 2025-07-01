@@ -9,12 +9,47 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 //go:embed version.txt
 var CURRENT_VERSION string
 
+func getLatestVersion() (string, error) {
+	resp, err := http.Get("https://dl.exec.li/version.txt")
+	if err != nil {
+		return "", fmt.Errorf("http: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("http: bad status code %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("http: %w", err)
+	}
+
+	version := strings.Trim(string(data), "\n")
+
+	return version, nil
+}
+
 func AutoUpdate(installScript string) error {
+
+	// check update
+	slog.Info("check update", "current_version", CURRENT_VERSION)
+	latestVersion, err := getLatestVersion()
+	if err != nil {
+		return fmt.Errorf("get latest version: %w", err)
+	}
+	slog.Info("latest version", "version", latestVersion)
+
+	if latestVersion == CURRENT_VERSION || CURRENT_VERSION == "DEV" {
+		return nil
+	}
+
 	slog.Info("auto update begin", "script", installScript)
 
 	// download install script
