@@ -7,6 +7,10 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+echo "> Stopping existing service"
+systemctl stop pbb-hub || true
+/etc/init.d/pbb-hub stop || true
+
 uname=$(uname -m)
 case $uname in
     x86_64)

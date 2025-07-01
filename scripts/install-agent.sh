@@ -7,6 +7,10 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+echo "> Stopping existing service"
+systemctl stop pbb-agent || true
+/etc/init.d/pbb-agent stop || true
+
 agnet_url="$1"
 agent_secret="$2"
 if [ -z "$agnet_url" ] || [ -z "$agent_secret" ]; then
