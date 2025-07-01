@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root."
     exit 1
@@ -20,7 +22,7 @@ case $uname in
 esac
 
 mkdir -p /opt/pbb
-$binary_url="https://dl.exec.li/hub-$arch"
+binary_url="https://dl.exec.li/hub-$arch"
 echo "> Downloading $binary_url to /opt/pbb/hub"
 curl -L "$binary_url" > /opt/pbb/hub
 
