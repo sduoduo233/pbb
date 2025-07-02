@@ -68,3 +68,16 @@ type Setting struct {
 	Key   string `db:"key"`
 	Value string `db:"value"`
 }
+
+const (
+	IncidentStateOngoing  = "ongoing"
+	IncidentStateResolved = "resolved"
+)
+
+type Incident struct {
+	Id        int32         `db:"id"`
+	ServerId  int32         `db:"server_id"`
+	StartedAt int64         `db:"started_at"`
+	EndedAt   sql.NullInt64 `db:"ended_at"`
+	State     string        `db:"state"`
+}

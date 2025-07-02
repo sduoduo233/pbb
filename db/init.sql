@@ -83,6 +83,14 @@ CREATE TABLE IF NOT EXISTS settings (
     value TEXT NOT NULL
 ) STRICT;
 
+CREATE TABLE IF NOT EXISTS incidents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+    started_at INTEGER NOT NULL,
+    ended_at INTEGER,
+    state TEXT NOT NULL
+) STRICT;
+
 INSERT OR IGNORE INTO settings (key, value) VALUES
     ('public_url', 'http://localhost:3005'),
     ('site_name', 'pbb');
