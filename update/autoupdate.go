@@ -65,7 +65,7 @@ func AutoUpdate(installScript string) error {
 		return fmt.Errorf("http: bad status code %d", resp.StatusCode)
 	}
 
-	path := "/opt/hub/" + path.Base(req.URL.Path)
+	path := "/opt/pbb/" + path.Base(req.URL.Path)
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("save install script: %w", err)
