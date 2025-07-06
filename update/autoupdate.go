@@ -38,14 +38,14 @@ func getLatestVersion() (string, error) {
 func AutoUpdate(name string) error {
 
 	// check update
-	slog.Info("check update", "current_version", CURRENT_VERSION)
+	slog.Info("check update", "current_version", strings.Trim(CURRENT_VERSION, "\n"))
 	latestVersion, err := getLatestVersion()
 	if err != nil {
 		return fmt.Errorf("get latest version: %w", err)
 	}
 	slog.Info("latest version", "version", latestVersion)
 
-	if latestVersion == CURRENT_VERSION || CURRENT_VERSION == "DEV" {
+	if latestVersion == strings.Trim(CURRENT_VERSION, "\n") || strings.Trim(CURRENT_VERSION, "\n") == "DEV" {
 		return nil
 	}
 
