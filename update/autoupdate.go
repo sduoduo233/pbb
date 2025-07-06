@@ -7,9 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
-	"path"
 	"strings"
+	"syscall"
 )
 
 //go:embed version.txt
@@ -36,7 +35,7 @@ func getLatestVersion() (string, error) {
 	return version, nil
 }
 
-func AutoUpdate(installScript string) error {
+func AutoUpdate(name string) error {
 
 	// check update
 	slog.Info("check update", "current_version", CURRENT_VERSION)
@@ -50,11 +49,39 @@ func AutoUpdate(installScript string) error {
 		return nil
 	}
 
-	slog.Info("auto update begin", "script", installScript)
+	// check architecture
+	var uname syscall.Utsname
+	err = syscall.Uname(&uname)
+	if err != nil {
+		return fmt.Errorf("uname: %w", err)
+	}
 
-	// download install script
+	downloadUrl := "https://dl.exec.li/" + name + "-"
+	unameArch := ""
+	for _, c := range uname.Machine {
+		if c == 0 {
+			break
+		}
+		unameArch += string(c)
+	}
 
-	req, _ := http.NewRequest("GET", installScript, nil)
+	if unameArch == "x86_64" {
+		downloadUrl += "amd64"
+	} else if strings.Contains(unameArch, "aarch64") || strings.Contains(unameArch, "arm64") {
+		downloadUrl += "arm64"
+	} else if strings.Contains(unameArch, "arm") {
+		downloadUrl += "arm32-v7a"
+	} else if strings.Contains(unameArch, "i386") || strings.Contains(unameArch, "i686") {
+		downloadUrl += "386"
+	} else {
+		return fmt.Errorf("unsupported architecture: %s", unameArch)
+	}
+
+	// download binary
+
+	slog.Info("download binary", "url", downloadUrl)
+
+	req, _ := http.NewRequest("GET", downloadUrl, nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http: %w", err)
@@ -65,32 +92,41 @@ func AutoUpdate(installScript string) error {
 		return fmt.Errorf("http: bad status code %d", resp.StatusCode)
 	}
 
-	path := "/opt/pbb/" + path.Base(req.URL.Path)
+	// replace current binary
+
+	path, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("get executable path: %w", err)
+	}
+
+	slog.Info("replace current binary", "path", path)
+
+	err = syscall.Unlink(path)
+	if err != nil {
+		return fmt.Errorf("unlink current binary: %w", err)
+	}
+
 	f, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("save install script: %w", err)
+		return fmt.Errorf("create new binary: %w", err)
 	}
 
 	_, err = io.Copy(f, resp.Body)
 	if err != nil {
 		f.Close()
-		return fmt.Errorf("save install script: %w", err)
+		return fmt.Errorf("write binary: %w", err)
 	}
 	f.Close()
 
-	slog.Info("download install script", "path", path)
-
-	// run install script
-	slog.Info("run install script", "path", path)
-
-	cmd := exec.Command("/bin/bash", path)
-	cmd.Stdout = os.Stderr
-	cmd.Stderr = os.Stderr
-	cmd.Start()
-	err = cmd.Wait()
+	err = syscall.Chmod(path, 0755)
 	if err != nil {
-		return fmt.Errorf("run install script: %w", err)
+		return fmt.Errorf("chmod new binary: %w", err)
 	}
-	slog.Info("auto update end", "script", installScript)
+
+	err = syscall.Exec(path, []string{path}, os.Environ())
+	if err != nil {
+		return fmt.Errorf("exec new binary: %w", err)
+	}
+
 	return nil
 }
