@@ -36,7 +36,7 @@ func incident() {
 
 			incident.ServerId = v.Id
 			incident.StartedAt = time.Now().Unix()
-			incident.EndedAt = sql.NullInt64{Valid: false}
+			incident.EndedAt = db.NullInt64{NullInt64: sql.NullInt64{Valid: false}}
 			incident.State = db.IncidentStateOngoing
 			_, err = db.DB.NamedExec(`INSERT INTO incidents (server_id, started_at, ended_at, state) VALUES (:server_id, :started_at, :ended_at, :state)`, &incident)
 			if err != nil {

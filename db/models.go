@@ -1,6 +1,9 @@
 package db
 
-import "database/sql"
+import (
+	"database/sql"
+	"encoding/json"
+)
 
 type User struct {
 	Id       int32  `db:"id"`
@@ -74,10 +77,36 @@ const (
 	IncidentStateResolved = "resolved"
 )
 
+// Nullable Int64 that overrides sql.NullInt64
+type NullInt64 struct {
+	sql.NullInt64
+}
+
+func (ni NullInt64) MarshalJSON() ([]byte, error) {
+	if ni.Valid {
+		return json.Marshal(ni.Int64)
+	}
+	return json.Marshal(nil)
+}
+
+func (ni *NullInt64) UnmarshalJSON(data []byte) error {
+	var i *int64
+	if err := json.Unmarshal(data, &i); err != nil {
+		return err
+	}
+	if i != nil {
+		ni.Valid = true
+		ni.Int64 = *i
+	} else {
+		ni.Valid = false
+	}
+	return nil
+}
+
 type Incident struct {
-	Id        int32         `db:"id"`
-	ServerId  int32         `db:"server_id"`
-	StartedAt int64         `db:"started_at"`
-	EndedAt   sql.NullInt64 `db:"ended_at"`
-	State     string        `db:"state"`
+	Id        int32     `db:"id" json:"id"`
+	ServerId  int32     `db:"server_id" json:"server_id"`
+	StartedAt int64     `db:"started_at" json:"started_at"`
+	EndedAt   NullInt64 `db:"ended_at" json:"ended_at"`
+	State     string    `db:"state" json:"state"`
 }

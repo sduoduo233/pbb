@@ -38,7 +38,7 @@ func viewData(c echo.Context) error {
 	id := c.Param("id")
 
 	duration, err := strconv.Atoi(c.QueryParam("duration"))
-	if err != nil || duration < 60*5 || duration > 60*60*24*3 {
+	if err != nil || duration < 60*5 || duration > 60*60*24*7 {
 		duration = 60 * 5
 	}
 
@@ -80,6 +80,12 @@ func viewData(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
+	incidents := make([]db.Incident, 0)
+	err = db.DB.Select(&incidents, "SELECT * FROM incidents WHERE server_id = ? AND (ended_at IS NOT NULL AND ended_at > ?) OR (started_at > ?) OR state = 'ongoing' ORDER BY id ASC", server.Id, after, after)
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
 	return c.JSON(http.StatusOK, D{
 		"server": D{
 			"last_report":      server.LastReport.Int64,
@@ -88,7 +94,8 @@ func viewData(c echo.Context) error {
 			"cpu":              server.Cpu.String,
 			"online":           server.LastReport.Valid && time.Since(time.Unix(server.LastReport.Int64, 0)) < time.Second*10,
 		},
-		"metrics": metrics,
-		"latest":  latest,
+		"metrics":   metrics,
+		"latest":    latest,
+		"incidents": incidents,
 	})
 }

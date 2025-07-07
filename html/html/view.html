@@ -13,6 +13,15 @@
 </style>
 
 <article aria-busy="true">
+    <header>Uptime</header>
+    <div class="d-flex" id="incidents"></div>
+    <div class="d-flex justify-content-between text-secondary">
+        <span id="incidnet-left"></span>
+        <span id="incidnet-right"></span>
+    </div>
+</article>
+
+<article aria-busy="true">
     <header>Basic</header>
     <div class="d-flex flex-wrap gap-4 justify-content-start">
 
@@ -52,6 +61,7 @@
     <option value="259200">3 Days</option>
     <option value="604800">7 Days</option>
 </select>
+
 
 
 <div class="row mt-4">
@@ -178,6 +188,8 @@
                     0, Math.max(...json.metrics.map(m => m.network_out_rate / 1024 / 1024), ...json.metrics.map(m => m.network_in_rate / 1024 / 1024)) * 1.2
                 ]);
 
+                drawIncidents(json.incidents, range);
+
 
             } catch (e) {
                 console.error("reload error", e);
@@ -284,6 +296,80 @@
 
             $(container).children().remove();
             $(container).append(svg.node());
+        }
+
+        function drawIncidents(incidents, range) {
+            const n = Math.floor($("#incidents").width() /  15);
+
+            if ($("#incidents").children().length !== n) {
+                $("#incidents").empty();
+                for (let i = 0; i < n; i++) {
+                    const block = $("<div class=\"flex-grow-1\" style=\"height: 40px; margin: 2px;\"></div>");
+                    $("#incidents").append(block);
+                }
+            }
+
+            const interval = range / n;
+            let start = Date.now() - range * 1000;
+
+            $("#incidnet-left").text($("#range option:selected").text().toLocaleLowerCase() + " ago");
+            $("#incidnet-right").text("Now");
+
+            for (let i = 0; i < n; i++) {
+                const block = $("#incidents").children().eq(i);
+                const blockStart = start + i * interval * 1000;
+                const blockEnd = blockStart + interval * 1000;
+
+                block.removeClass("bg-success bg-danger bg-warning");
+                
+                const filtered = incidents.filter(inc => {
+                    const incStart = inc.started_at * 1000;
+                    const incEnd = inc.ended_at ? inc.ended_at * 1000 : Date.now() + 1000;
+                    return (incStart < blockStart && incEnd > blockEnd && incStart < blockEnd) || 
+                           (incStart < blockEnd && incEnd > blockEnd) || 
+                           (incStart >= blockStart && incEnd <= blockEnd) ||
+                           (incStart < blockStart && incEnd > blockStart && incEnd < blockEnd);
+                })
+
+                if (filtered.length > 0) {
+                    const sortedIncidents = filtered.map(inc => {
+                        let incStart = inc.started_at * 1000;
+                        let incEnd = inc.ended_at ? inc.ended_at * 1000 : Date.now() + 1000;
+                        if (incStart < blockStart) {
+                            incStart = blockStart;
+                        }
+                        if (incEnd > blockEnd) {
+                            incEnd = blockEnd;
+                        }
+                        return {
+                            started_at: incStart,
+                            ended_at: incEnd,
+                        }
+                    });
+                    let partialOutage = false;
+                    if (blockStart < sortedIncidents[0].started_at) {
+                        partialOutage = true;
+                    }
+                    if (sortedIncidents[sortedIncidents.length - 1].ended_at < blockEnd) {
+                        partialOutage = true;
+                    }
+                    for (let j = 0; j < sortedIncidents.length - 1; j++) {
+                        if (sortedIncidents[j].ended_at < sortedIncidents[j + 1].started_at) {
+                            partialOutage = true;
+                            break;
+                        }
+                    }
+                    if (partialOutage) {
+                        block.addClass("bg-warning");
+                    } else {
+                        block.addClass("bg-danger");
+                    }
+                } else {
+                    block.addClass("bg-success");
+                }
+
+            }
+            
         }
     })
 
