@@ -81,7 +81,7 @@ func viewData(c echo.Context) error {
 	}
 
 	incidents := make([]db.Incident, 0)
-	err = db.DB.Select(&incidents, "SELECT * FROM incidents WHERE server_id = ? AND (ended_at IS NOT NULL AND ended_at > ?) OR (started_at > ?) OR state = 'ongoing' ORDER BY id ASC", server.Id, after, after)
+	err = db.DB.Select(&incidents, "SELECT * FROM incidents WHERE server_id = ? AND ((ended_at IS NOT NULL AND ended_at > ?) OR (started_at > ?) OR state = 'ongoing') ORDER BY id ASC", server.Id, after, after)
 	if err != nil {
 		return fmt.Errorf("db: %w", err)
 	}
