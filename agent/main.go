@@ -47,7 +47,7 @@ func main() {
 		panic(err)
 	}
 	s.NewJob(gocron.CronJob("0 3 * * *", false), gocron.NewTask(func() {
-		err := update.AutoUpdate("https://dl.exec.li/install-agent.sh")
+		err := update.AutoUpdate("agent")
 		if err != nil {
 			slog.Error("auto update error", "error", err)
 		}

@@ -17,7 +17,7 @@ func Init() {
 	s.NewJob(gocron.CronJob("*/30 * * * *", false), gocron.NewTask(clean))
 	s.NewJob(gocron.CronJob("*/30 * * * * *", true), gocron.NewTask(incident))
 	s.NewJob(gocron.CronJob("5 3 * * *", false), gocron.NewTask(func() {
-		err := update.AutoUpdate("https://dl.exec.li/install-hub.sh")
+		err := update.AutoUpdate("hub")
 		if err != nil {
 			slog.Error("auto update error", "error", err)
 		}
