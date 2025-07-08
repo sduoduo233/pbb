@@ -304,7 +304,7 @@
             if ($("#incidents").children().length !== n) {
                 $("#incidents").empty();
                 for (let i = 0; i < n; i++) {
-                    const block = $("<div class=\"flex-grow-1\" style=\"height: 40px; margin: 2px;\"></div>");
+                    const block = $("<a class=\"flex-grow-1\" style=\"height: 40px; margin: 2px;\" href=\"javascript:void(0);\"></a>");
                     $("#incidents").append(block);
                 }
             }
@@ -344,6 +344,7 @@
                         return {
                             started_at: incStart,
                             ended_at: incEnd,
+                            id: inc.id,
                         }
                     });
                     let partialOutage = false;
@@ -364,8 +365,10 @@
                     } else {
                         block.addClass("bg-danger");
                     }
+                    block.attr("href", "/incidents?" + sortedIncidents.map(inc => "id=" + inc.id).join("&"));
                 } else {
                     block.addClass("bg-success");
+                    block.attr("href", "javascript:void(0);");
                 }
 
             }

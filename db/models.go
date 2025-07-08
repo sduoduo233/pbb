@@ -110,3 +110,9 @@ type Incident struct {
 	EndedAt   NullInt64 `db:"ended_at" json:"ended_at"`
 	State     string    `db:"state" json:"state"`
 }
+
+type IncidentWithServerLabel struct {
+	Incident
+	ServerLabel string `db:"server_label"`
+	Hidden      bool   `db:"hidden"`
+}

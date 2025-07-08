@@ -1,0 +1,57 @@
+{{ define "incidents" }}
+{{ template "header" . }}
+
+<style>
+.incident-container .d-flex:last-child article {
+    margin-bottom: 0px;
+}
+</style>
+
+<h2 class="my-3">Incidents</h2>
+
+
+{{ range .incidents }}
+
+<h3>#{{ .Id }}</h3>
+
+<div class="d-flex flex-column mb-5 incident-container">
+    <div class="d-flex flex-row">
+        <div class="position-relative" style="width: 100px;">
+            <div class="position-absolute d-flex justify-content-center align-items-center top-0 start-50 translate-middle-x text-danger rounded-circle" style="width: 50px; height: 50px; background-color: var(--pico-card-background-color);">
+                <i class="bi bi-exclamation fs-2"></i>
+            </div>
+            <div class="h-100 border position-absolute top-50 start-50 translate-middle" style="z-index: -1;"></div>
+        </div>
+        <article class="flex-grow-1">
+            <p class="text-secondary">
+                <timestamp>{{ .StartedAt }}</timestamp>
+            </p>
+            Server offline <br>
+            Server Label: {{ .ServerLabel }}
+        </article>
+    </div>
+
+
+    {{ if .EndedAt.Valid }}
+        <div class="d-flex flex-row">
+            <div class="position-relative" style="width: 100px;">
+                <div class="position-absolute d-flex justify-content-center align-items-center top-0 start-50 translate-middle-x text-success rounded-circle" style="width: 50px; height: 50px; background-color: var(--pico-card-background-color);">
+                    <i class="bi bi-check fs-2"></i>
+                </div>
+                <div class="h-100 border position-absolute top-50 start-50 translate-middle" style="z-index: -1;"></div>
+            </div>
+            <article class="flex-grow-1">
+                <p class="text-secondary">
+                    <timestamp>{{ .EndedAt.Int64 }}</timestamp>
+                </p>
+                Incident resolved
+            </article>
+        </div>
+    {{ end }}
+</div>
+
+{{ end }}
+
+
+{{ template "footer" . }}
+{{ end }}
