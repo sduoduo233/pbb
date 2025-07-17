@@ -61,7 +61,7 @@ func viewData(c echo.Context) error {
 	metrics := make([]db.ServerMetrics, 0)
 	after := time.Now().Add(-(time.Second * time.Duration(duration))).Unix()
 
-	if duration >= 7200 { // 2 hours or more
+	if duration > 7200 { // 2 hours more
 		// use sampled data
 		err = db.DB.Select(&metrics, "SELECT * FROM server_metrics_10m WHERE server_id = ? AND created_at > ? ORDER BY id DESC", server.Id, after)
 		if err != nil {
