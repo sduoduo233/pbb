@@ -129,7 +129,7 @@ func deleteServer(c echo.Context) error {
 	_, err := db.DB.Exec("DELETE FROM servers WHERE id = ?", id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return c.Render(http.StatusNotFound, "error", D{"error": "Server Not Found"})
+			return c.String(http.StatusNotFound, "server not found")
 		}
 		return fmt.Errorf("db: %w", err)
 	}

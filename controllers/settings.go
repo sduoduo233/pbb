@@ -20,7 +20,7 @@ func settings(c echo.Context) error {
 		settingsMap[setting.Key] = setting.Value
 	}
 
-	return c.Render(http.StatusOK, "settings", D{"settings": settingsMap})
+	return c.Render(http.StatusOK, "settings", D{"settings": settingsMap, "title": "Settings"})
 }
 
 func doUpdateSettings(c echo.Context) error {

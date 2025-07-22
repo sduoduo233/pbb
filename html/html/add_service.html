@@ -1,0 +1,33 @@
+{{ define "add_service" }}
+{{ template "header" . }}
+
+<h1>Add Service</h1>
+
+<form action="/dashboard/services/add" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Label
+        <input type="text" placeholder="Label" required name="label" value="{{ .post.label }}">
+    </label>
+
+    <label>
+        Type
+        <select name="type" aria-label="Type" required value="{{ .post.type }}">
+            <option value="ping">ICMP Ping</option>
+            <option value="tcp">TCP Ping</option>
+        </select>
+    </label>
+
+    <label>
+        Host
+        <input type="text" placeholder="8.8.8.8 / 8.8.8.8:853" required name="host" value="{{ .post.host }}">
+    </label>
+
+    <button>Save</button>
+
+</form>
+
+{{ template "footer" . }}
+{{ end }}

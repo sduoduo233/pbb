@@ -116,3 +116,29 @@ type IncidentWithServerLabel struct {
 	ServerLabel string `db:"server_label"`
 	Hidden      bool   `db:"hidden"`
 }
+
+type Service struct {
+	Id    int32  `db:"id" json:"id"`
+	Label string `db:"label" json:"label"`
+	Type  string `db:"type" json:"type"`
+	Host  string `db:"host" json:"host"`
+}
+
+type ServiceMetric struct {
+	Id        int32     `db:"id" json:"id"`
+	CreatedAt uint64    `db:"created_at" json:"created_at"`
+	Timestamp uint64    `db:"timestamp" json:"timestamp"`
+	From      int32     `db:"from" json:"from"`
+	To        int32     `db:"to" json:"to"`
+	Min       NullInt64 `db:"min" json:"min"`
+	Max       NullInt64 `db:"max" json:"max"`
+	Avg       NullInt64 `db:"avg" json:"avg"`
+	Median    NullInt64 `db:"median" json:"median"`
+	Loss      float32   `db:"loss" json:"loss"`
+}
+
+type ServerService struct {
+	Id        int32 `db:"id" json:"id"`
+	ServerId  int32 `db:"server_id" json:"server_id"`
+	ServiceId int32 `db:"service_id" json:"service_id"`
+}

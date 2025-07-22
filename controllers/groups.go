@@ -74,6 +74,9 @@ func deleteGroup(c echo.Context) error {
 
 	_, err := db.DB.Exec("DELETE FROM groups WHERE id = ?", id)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.String(http.StatusNotFound, "group not found")
+		}
 		return fmt.Errorf("db: %w", err)
 	}
 

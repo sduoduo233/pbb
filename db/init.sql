@@ -91,6 +91,35 @@ CREATE TABLE IF NOT EXISTS incidents (
     state TEXT NOT NULL
 ) STRICT;
 
+
+CREATE TABLE IF NOT EXISTS services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL,
+    host TEXT NOT NULL
+) STRICT;
+
+
+CREATE TABLE IF NOT EXISTS service_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at INTEGER NOT NULL,
+    `timestamp` INTEGER NOT NULL,
+    `from` INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+    `to` INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    min INTEGER,
+    max INTEGER,
+    loss REAL NOT NULL,
+    avg INTEGER,
+    median INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS server_services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    server_id INTEGER NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+    service_id INTEGER NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    UNIQUE(server_id, service_id)
+);
+
 INSERT OR IGNORE INTO settings (key, value) VALUES
     ('public_url', 'http://localhost:3005'),
     ('site_name', 'pbb');

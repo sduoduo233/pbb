@@ -50,6 +50,13 @@ func Route(g *echo.Group) {
 	g.GET("/dashboard/settings", settings, mustAuth)
 	g.POST("/dashboard/settings", doUpdateSettings, mustAuth)
 
+	g.GET("/dashboard/services", services, mustAuth)
+	g.GET("/dashboard/services/add", addService, mustAuth)
+	g.POST("/dashboard/services/add", doAddService, mustAuth)
+	g.DELETE("/dashboard/services/:id", deleteService, mustAuth)
+	g.GET("/dashboard/services/:id", editService, mustAuth)
+	g.POST("/dashboard/services/:id", doEditService, mustAuth)
+
 	// agent reporting
 
 	g.POST("/agent/metric", metrics)

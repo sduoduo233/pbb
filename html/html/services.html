@@ -1,0 +1,41 @@
+{{ define "services" }}
+{{ template "header" . }}
+
+{{ template "dashboard_header" . }}
+
+<div class="mb-3">
+    <a href="/dashboard/services/add"><button>Add</button></a>
+</div>
+
+<div class="overflow-auto text-nowrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Label</th>
+                <th>Type</th>
+                <th>Host</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .services }}
+            <tr>
+                <td>{{ .Id }}</td>
+                <td>{{ .Label }}</td>
+                <td>{{ .Type }}</td>
+                <td>{{ .Host }}</td>
+                <th>
+                    {{ template "delete_button" (printf "/dashboard/services/%d" .Id) }}
+                    <a href="/dashboard/services/{{ .Id }}"><button>Edit</button></a>
+                </th>
+            </tr>
+
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+{{ template "footer" . }}
+{{ end }}
