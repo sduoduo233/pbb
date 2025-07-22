@@ -16,6 +16,11 @@ func indexServers(c echo.Context) error {
 	user := GetUser(c)
 	showHidden := user != nil
 
+	view := c.QueryParam("view")
+	if view != "cards" && view != "table" {
+		view = "cards"
+	}
+
 	type Server struct {
 		ID     int32
 		Label  string
@@ -128,10 +133,18 @@ func indexServers(c echo.Context) error {
 		groups = append(groups, group)
 	}
 
+	if view == "table" {
+		return c.Render(http.StatusOK, "index_servers_table", D{"groups": groups, "stat_online": statOnline, "stat_offline": statOffline, "stat_total": statTotal, "stat_network_in": formatBytes(uint64(statNetworkIn)), "stat_network_out": formatBytes(uint64(statNetworkOut))})
+	}
 	return c.Render(http.StatusOK, "index_servers", D{"groups": groups, "stat_online": statOnline, "stat_offline": statOffline, "stat_total": statTotal, "stat_network_in": formatBytes(uint64(statNetworkIn)), "stat_network_out": formatBytes(uint64(statNetworkOut))})
 }
 
 func index(c echo.Context) error {
 
-	return c.Render(http.StatusOK, "index", D{})
+	view := c.QueryParam("view")
+	if view != "cards" && view != "table" {
+		view = "cards"
+	}
+
+	return c.Render(http.StatusOK, "index", D{"view": view})
 }

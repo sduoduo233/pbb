@@ -29,10 +29,25 @@
     </div>
 </div>
 
-<div hx-get="/servers" hx-trigger="load" hx-swap="outerHTML">
+<fieldset>
+    <input type="radio" id="view-cards" name="view" value="cards" />
+    <label htmlFor="view-cards">Cards</label>
+    <input type="radio" id="view-table" name="view" value="table" />
+    <label htmlFor="view-table">Table</label>
+</fieldset>
+
+<div hx-get="/servers?view={{ .view }}" hx-trigger="load" hx-swap="outerHTML">
     <article aria-busy="true"></article>
 </div>
 
+<script>
+    $(function() {
+        $("input[name=\"view\"]").on("click", function() {
+            location.search = "?view=" + $(this).val();
+        })
+        $("input[name=\"view\"][value=\"{{ .view }}\"]").attr("checked", true);
+    })
+</script>
 
 {{ template "footer" . }}
 {{ end }}

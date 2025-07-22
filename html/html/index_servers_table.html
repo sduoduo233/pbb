@@ -1,0 +1,90 @@
+{{ define "index_servers_table" }}
+
+<div hx-get="/servers?view=table" hx-trigger="every 3s" hx-swap="morphdom">
+
+<div class="overflow-auto text-nowrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Label</th>
+                <th>CPU</th>
+                <th>Memory</th>
+                <th>Swap</th>
+                <th>Disk</th>
+                <th>Network</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .groups }}
+
+
+                {{ if not .Servers }}
+                {{ continue }}
+                {{ end }}
+
+                {{ range .Servers }}
+
+                <tr>
+                    <td>
+                        <a href="/servers/{{ .ID }}" class="text-decoration-none" style="color: inherit;" id="server-card-{{ .ID }}">
+                            {{ if .Online }}
+                            <i class="bi bi-circle-fill text-success"></i>
+                            {{ else }}
+                            <i class="bi bi-circle-fill text-danger"></i>
+                            {{ end }}
+                            {{ .Label }}
+                        </a>
+                    </td>
+                    <td>
+                        <progress style="width: 100px;" value="{{ .Cpu }}" max="100"></progress>
+                    </td>
+                    <td>
+                        <progress style="width: 100px;" value="{{ .MemoryUsed }}" max="{{ .MemoryTotal }}"></progress>
+                    </td>
+                    <td>
+                        <progress style="width: 100px;" value="{{ .SwapUsed }}" max="{{ .SwapTotal }}"></progress>
+                    </td>
+                    <td>
+                        <progress style="width: 100px;" value="{{ .DiskUsed }}" max="{{ .DiskTotal }}"></progress>
+                    </td>
+                    <td>
+                        <i class="bi bi-arrow-up-circle"></i>{{ .NetworkOutFormated }}/s <i class="bi bi-arrow-down-circle"></i>{{ .NetworkInFormated }}/s
+                    </td>
+                </tr>
+                
+
+                {{ end }}
+
+            {{end}}
+        </tbody>
+    </table>
+
+    <style>
+         td {
+            vertical-align: middle !important;
+        }
+        td > progress {
+            margin-bottom: 0px !important;
+        }
+    </style>
+
+</div>
+
+</div>
+
+<span class="fs-1" id="stat-total" hx-swap-oob="true">{{ .stat_total }}</span>
+<span class="fs-1" id="stat-online" hx-swap-oob="true">{{ .stat_online }}</span>
+<span class="fs-1" id="stat-offline" hx-swap-oob="true">{{ .stat_offline }}</span>
+<div id="stat-network" class="vstack" hx-swap-oob="true">
+    <div class="hstack gap-2">
+        <i class="bi bi-arrow-up-circle-fill"></i>
+        <span>{{ .stat_network_out }}/s</span>
+    </div>
+    <div class="hstack gap-2">
+        <i class="bi bi-arrow-down-circle-fill"></i>
+        <span>{{ .stat_network_in }}/s</span>
+    </div>
+</div>
+
+{{ end }}
