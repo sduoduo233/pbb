@@ -37,16 +37,16 @@
                         </a>
                     </td>
                     <td>
-                        <progress style="width: 100px;" value="{{ .Cpu }}" max="100"></progress>
+                        <progress style="width: 150px;" value="{{ .Cpu }}" max="100"></progress> <br> {{ printf "%.1f" .Cpu }}%
                     </td>
                     <td>
-                        <progress style="width: 100px;" value="{{ .MemoryUsed }}" max="{{ .MemoryTotal }}"></progress>
+                        <progress style="width: 150px;" value="{{ .MemoryUsed }}" max="{{ .MemoryTotal }}"></progress> <br> {{ .MemoryUsedFormated }}
                     </td>
                     <td>
-                        <progress style="width: 100px;" value="{{ .SwapUsed }}" max="{{ .SwapTotal }}"></progress>
+                        <progress style="width: 150px;" value="{{ .SwapUsed }}" max="{{ .SwapTotal }}"></progress> <br> {{ .SwapUsedFormated }}
                     </td>
                     <td>
-                        <progress style="width: 100px;" value="{{ .DiskUsed }}" max="{{ .DiskTotal }}"></progress>
+                        <progress style="width: 150px;" value="{{ .DiskUsed }}" max="{{ .DiskTotal }}"></progress> <br> {{ .DiskUsedFormated }}
                     </td>
                     <td>
                         <i class="bi bi-arrow-up-circle"></i>{{ .NetworkOutFormated }}/s <i class="bi bi-arrow-down-circle"></i>{{ .NetworkInFormated }}/s
