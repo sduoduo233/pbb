@@ -13,7 +13,7 @@ import (
 func csrf(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-		if c.Path() == "/agent/metric" || c.Path() == "/agent/info" {
+		if c.Path() == "/agent/metric" || c.Path() == "/agent/info" || c.Path() == "/agent/service" {
 			return next(c)
 		}
 

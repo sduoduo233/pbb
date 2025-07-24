@@ -1,5 +1,7 @@
 package types
 
+import "github.com/sduoduo233/pbb/db"
+
 type ServerMetric struct {
 	Cpu            float32 `json:"cpu"`
 	MemoryPercent  float32 `json:"memory_percent"`
@@ -24,4 +26,14 @@ type ServerInfo struct {
 	Arch    string `json:"arch"`
 	OS      string `json:"operating_system"`
 	Version string `json:"version"`
+}
+
+type ServiceMetric struct {
+	Timestamp uint64       `json:"timestamp"`
+	To        int32        `json:"to"`
+	Min       db.NullInt64 `json:"min"`
+	Max       db.NullInt64 `json:"max"`
+	Avg       db.NullInt64 `json:"avg"`
+	Median    db.NullInt64 `json:"median"`
+	Loss      float32      `json:"loss"`
 }

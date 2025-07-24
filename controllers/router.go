@@ -61,5 +61,6 @@ func Route(g *echo.Group) {
 
 	g.POST("/agent/metric", metrics)
 	g.POST("/agent/info", systemInfo)
+	g.POST("/agent/service", service)
 
 }

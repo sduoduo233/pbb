@@ -22,6 +22,7 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 
 	"github.com/sduoduo233/pbb/controllers/types"
+	"github.com/sduoduo233/pbb/db"
 	"github.com/sduoduo233/pbb/update"
 )
 
@@ -36,6 +37,10 @@ func main() {
 
 	URL = os.Getenv("AGENT_URL")
 	SECRET = os.Getenv("AGENT_SECRET")
+
+	if os.Getenv("DEBUG") == "1" {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
 
 	slog.Warn("agent")
 
@@ -54,17 +59,33 @@ func main() {
 	}))
 	s.Start()
 
-	lastReportSystemInfo := time.Unix(0, 0)
-
-	for {
-		if time.Since(lastReportSystemInfo) > time.Minute*10 {
+	go func() {
+		// report system info every 10 minutes
+		for {
 			err := reportSystemInfo()
 			if err != nil {
 				slog.Error("could not report system info", "err", err)
-			} else {
-				lastReportSystemInfo = time.Now()
+				time.Sleep(time.Second * 30)
+				continue
 			}
+
+			time.Sleep(time.Minute * 10)
 		}
+	}()
+
+	go func() {
+		// report ping every 5 minutes
+		ticker := time.NewTicker(time.Minute * 5)
+		for {
+			err := pingServices()
+			if err != nil {
+				slog.Error("could not report ping", "err", err)
+			}
+			<-ticker.C
+		}
+	}()
+
+	for {
 
 		m, err := getMetirc()
 		if err != nil {
@@ -73,7 +94,7 @@ func main() {
 			continue
 		}
 
-		err = sendReport(URL+"/metric", m)
+		_, err = sendReport(URL+"/metric", m)
 		if err != nil {
 			slog.Error("could not send request", "err", err)
 			time.Sleep(time.Second * 5)
@@ -85,10 +106,10 @@ func main() {
 	}
 }
 
-func sendReport(url string, m any) error {
+func sendReport(url string, m any) ([]byte, error) {
 	jsonBytes, err := json.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("json marshal: %w", err)
+		return nil, fmt.Errorf("json marshal: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
@@ -96,26 +117,27 @@ func sendReport(url string, m any) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(jsonBytes))
 	if err != nil {
-		return fmt.Errorf("new request: %w", err)
+		return nil, fmt.Errorf("new request: %w", err)
 	}
 	req.Header.Set("x-secret", SECRET)
 	req.Header.Set("content-type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("do request: %w", err)
+		return nil, fmt.Errorf("do request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("read body: %w", err)
-		}
-		return fmt.Errorf("bad response: status=%s, body=%s", resp.Status, string(body))
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read body: %w", err)
 	}
 
-	return nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad response: status=%s, body=%s", resp.Status, string(body))
+	}
+
+	return body, nil
 }
 
 var (
@@ -251,7 +273,44 @@ func reportSystemInfo() error {
 
 	// send report
 
-	err = sendReport(URL+"/info", &s)
+	_, err = sendReport(URL+"/info", &s)
+	if err != nil {
+		return fmt.Errorf("post: %w", err)
+	}
+
+	return nil
+}
+
+var relatedServices = make([]db.Service, 0)
+var serviceMetrics = make([]types.ServiceMetric, 0)
+
+func pingServices() error {
+	serviceMetrics = make([]types.ServiceMetric, 0)
+
+	var resultsCh = make(chan types.ServiceMetric)
+
+	for _, s := range relatedServices {
+		timestamp := time.Now().Unix()
+		timestamp = timestamp / 300 * 300
+
+		switch s.Type {
+		case "ping":
+			go icmpPing(resultsCh, s.Host, uint64(timestamp), s.Id)
+		case "tcp":
+			go tcpPing(resultsCh, s.Host, uint64(timestamp), s.Id)
+		}
+	}
+
+	for range len(relatedServices) {
+		serviceMetrics = append(serviceMetrics, <-resultsCh)
+	}
+
+	body, err := sendReport(URL+"/service", serviceMetrics)
+	if err != nil {
+		return fmt.Errorf("post: %w", err)
+	}
+
+	err = json.Unmarshal(body, &relatedServices)
 	if err != nil {
 		return fmt.Errorf("post: %w", err)
 	}

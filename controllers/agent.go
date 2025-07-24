@@ -13,16 +13,27 @@ import (
 	"github.com/sduoduo233/pbb/db"
 )
 
-func metrics(c echo.Context) error {
-	secret := c.Request().Header.Get("x-secret")
-
+func findServerBySecret(secret string) (*db.Server, error) {
 	var s db.Server
 	err := db.DB.Get(&s, "SELECT * FROM servers WHERE secret = ?", secret)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusUnauthorized, "bad x-secret")
+			return nil, nil
 		}
-		return fmt.Errorf("get server %w", err)
+		return nil, fmt.Errorf("find server: db: %w", err)
+	}
+
+	return &s, nil
+}
+
+func metrics(c echo.Context) error {
+	secret := c.Request().Header.Get("x-secret")
+	s, err := findServerBySecret(secret)
+	if err != nil {
+		return err
+	}
+	if s == nil {
+		return c.String(http.StatusUnauthorized, "bad x-secret")
 	}
 
 	slog.Debug("new metric", "server", s.Id, "label", s.Label)
@@ -51,14 +62,12 @@ func metrics(c echo.Context) error {
 
 func systemInfo(c echo.Context) error {
 	secret := c.Request().Header.Get("x-secret")
-
-	var s db.Server
-	err := db.DB.Get(&s, "SELECT * FROM servers WHERE secret = ?", secret)
+	s, err := findServerBySecret(secret)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return c.String(http.StatusUnauthorized, "bad x-secret")
-		}
-		return fmt.Errorf("get server %w", err)
+		return err
+	}
+	if s == nil {
+		return c.String(http.StatusUnauthorized, "bad x-secret")
 	}
 
 	var i types.ServerInfo
@@ -74,4 +83,47 @@ func systemInfo(c echo.Context) error {
 
 	return c.String(http.StatusOK, "OK")
 
+}
+
+func service(c echo.Context) error {
+	secret := c.Request().Header.Get("x-secret")
+	s, err := findServerBySecret(secret)
+	if err != nil {
+		return err
+	}
+	if s == nil {
+		return c.String(http.StatusUnauthorized, "bad x-secret")
+	}
+
+	var metrics []types.ServiceMetric
+	err = c.Bind(&metrics)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request: "+err.Error())
+	}
+
+	for _, m := range metrics {
+		dbMetric := db.ServiceMetric{
+			CreatedAt: uint64(time.Now().Unix()),
+			Timestamp: m.Timestamp,
+			From:      s.Id,
+			To:        m.To,
+			Min:       m.Min,
+			Max:       m.Max,
+			Avg:       m.Avg,
+			Median:    m.Median,
+			Loss:      m.Loss,
+		}
+		_, err = db.DB.NamedExec("INSERT INTO service_metrics (created_at, timestamp, `from`, `to`, min, max, loss, avg, median) VALUES (:created_at, :timestamp, :from, :to, :min, :max, :loss, :avg, :median)", dbMetric)
+		if err != nil {
+			return fmt.Errorf("db: %w", err)
+		}
+	}
+
+	var relatedServices = make([]db.Service, 0)
+	err = db.DB.Select(&relatedServices, "SELECT s.* FROM services s INNER JOIN server_services ss ON s.id = ss.service_id AND ss.server_id = ?", s.Id)
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
+	return c.JSON(http.StatusOK, relatedServices)
 }
