@@ -1,0 +1,308 @@
+package controllers
+
+import (
+	"bytes"
+	"database/sql"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"image/png"
+	"net/http"
+	"slices"
+	"strconv"
+	"strings"
+	"sync"
+
+	_ "embed"
+
+	"github.com/labstack/echo/v4"
+	"github.com/sduoduo233/pbb/db"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/math/fixed"
+)
+
+var (
+	//go:embed NotoSansSC.ttf
+	NOTOSANSSC []byte
+
+	BLACK   = color.RGBA{R: 0, G: 0, B: 0, A: 255}
+	RED     = color.RGBA{R: 255, G: 0, B: 0, A: 255}
+	WHITE   = color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	NO_DATA = hexColor("#fffee8ff")
+	SMOKE   = hexColor("#dddddd")
+
+	FONT16 font.Face
+	FONT20 font.Face
+	FONT12 font.Face
+
+	drawTextLock = sync.Mutex{}
+)
+
+func drawFilledRect(img draw.Image, x, y, w, h int, c color.RGBA) {
+	draw.Draw(img, image.Rect(x, y, x+w, y+h), image.NewUniform(c), image.Point{X: 0, Y: 0}, draw.Src)
+}
+
+func drawFilledRectMask(img draw.Image, x, y, w, h int, c color.RGBA, mask image.Rectangle) {
+	draw.Draw(img, image.Rect(x, y, x+w, y+h).Intersect(mask), image.NewUniform(c), image.Point{X: 0, Y: 0}, draw.Src)
+}
+
+func drawText(img draw.Image, str string, face font.Face, x, y int, c color.RGBA) {
+	drawTextLock.Lock()
+	defer drawTextLock.Unlock()
+
+	a := face.Metrics().Ascent.Ceil()
+
+	d := font.Drawer{
+		Dst:  img,
+		Src:  image.NewUniform(c),
+		Face: face,
+		Dot:  fixed.P(x, y+a),
+	}
+	d.DrawString(str)
+}
+
+func measureWidth(face font.Face, str string) int {
+	drawTextLock.Lock()
+	defer drawTextLock.Unlock()
+
+	w := 0
+
+	for _, r := range str {
+		a, ok := face.GlyphAdvance(r)
+		if !ok {
+			continue
+		}
+		w += a.Ceil()
+	}
+
+	return w
+}
+
+func hexColor(str string) color.RGBA {
+	str = strings.TrimPrefix(str, "#")
+	b, err := hex.DecodeString(str)
+	if err != nil || len(b) < 3 {
+		panic(fmt.Errorf("bad hex color: %s", str))
+	}
+	return color.RGBA{A: 255, R: b[0], G: b[1], B: b[2]}
+}
+
+func graph(c echo.Context) error {
+	from := c.QueryParam("from")
+	to := c.QueryParam("to")
+	timestampEnd := 1753357200
+	timestampStart := 1753348500
+
+	user := GetUser(c)
+	showHidden := user != nil
+
+	// fetch data
+
+	var server db.Server
+	err := db.DB.Get(&server, "SELECT * FROM servers WHERE id = ?", from)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.String(http.StatusNotFound, "404 Not Found")
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	if !showHidden && server.Hidden {
+		return c.Render(http.StatusNotFound, "error", D{"error": "404 Not Found"})
+	}
+
+	var service db.Service
+	err = db.DB.Get(&service, "SELECT * FROM services WHERE id = ?", to)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.String(http.StatusNotFound, "404 Not Found")
+		}
+		return fmt.Errorf("db: %w", err)
+	}
+
+	var metrics []db.ServiceMetric
+	err = db.DB.Select(&metrics, "SELECT * FROM service_metrics WHERE `from` = ? AND `to` = ? AND timestamp <= ? AND timestamp >= ? ORDER BY timestamp", from, to, timestampEnd, timestampStart)
+	if err != nil {
+		return fmt.Errorf("db: %w", err)
+	}
+
+	// render
+
+	img := image.NewRGBA(image.Rect(0, 0, 600, 400))
+
+	// background
+	drawFilledRect(img, 0, 0, 600, 400, WHITE)
+
+	// title
+	drawText(img, "From "+server.Label+" to "+service.Label, FONT20, 0, 0, BLACK)
+
+	// graph outline
+	drawFilledRect(img, 60, 40, 2, 400-40-40, BLACK)
+	drawFilledRect(img, 60, 400-40, 600-60-20, 2, BLACK)
+
+	// y axis
+	maxY := slices.MaxFunc(metrics, func(a, b db.ServiceMetric) int {
+		return int(a.Max.Int64) - int(b.Max.Int64)
+	}).Max.Int64
+	minY := max(slices.MinFunc(metrics, func(a, b db.ServiceMetric) int {
+		return int(a.Min.Int64) - int(b.Min.Int64)
+	}).Min.Int64, 0)
+
+	medianSum := 0
+	for _, m := range metrics {
+		medianSum += int(m.Median.Int64)
+	}
+	avgMedian := medianSum / len(metrics)
+
+	if maxY > int64(avgMedian)*5 {
+		maxY = int64(avgMedian) * 5
+	}
+	if minY < int64(avgMedian)/5 {
+		minY = int64(avgMedian) / 5
+	}
+
+	ms := true
+	var niceMinY, niceMaxY int64
+
+	if maxY-minY < 1000 {
+		ms = false
+		niceMinY = minY / 100 * 100
+		niceMaxY = (maxY/100 + 1) * 100
+	} else if maxY-minY < 50000 {
+		niceMinY = minY / 5000 * 5000
+		niceMaxY = (maxY/5000 + 1) * 5000
+	} else if maxY-minY < 100000 {
+		niceMinY = minY / 10000 * 10000
+		niceMaxY = (maxY/10000 + 1) * 10000
+	} else if maxY-minY < 300000 {
+		niceMinY = minY / 20000 * 20000
+		niceMaxY = (maxY/20000 + 1) * 20000
+	} else {
+		niceMinY = minY / 50000 * 50000
+		niceMaxY = (maxY/50000 + 1) * 50000
+	}
+
+	valuePerStep := int64(0)
+	if niceMaxY-niceMinY <= 500 {
+		valuePerStep = 20
+
+	} else if niceMaxY-niceMinY <= 1000 {
+		valuePerStep = 100
+	} else if niceMaxY-niceMinY <= 10000 {
+		valuePerStep = 2000
+	} else if niceMaxY-niceMinY <= 50000 {
+		valuePerStep = 5000
+	} else if niceMaxY-niceMinY <= 100000 {
+		valuePerStep = 20000
+	} else if niceMaxY-niceMinY <= 300000 {
+		valuePerStep = 50000
+	} else if niceMaxY-niceMinY <= 600000 {
+		valuePerStep = 100000
+	} else {
+		valuePerStep = 200000
+	}
+
+	steps := (niceMaxY-niceMinY)/int64(valuePerStep) + 1
+	heightPerStep := (400 - 40 - 40) / steps
+	for i := range steps + 1 {
+		y := int(400 - 40 - int64(i)*heightPerStep)
+		drawFilledRect(img, 60-5, y, 5, 2, BLACK)
+		str := strconv.Itoa(int(valuePerStep*i+niceMinY)) + "μs"
+		if ms {
+			str = strconv.Itoa(int(valuePerStep*i+niceMinY)/1000) + "ms"
+		}
+		drawText(img, str, FONT12, 60-5-5-measureWidth(FONT12, str), y-10, BLACK)
+	}
+
+	minValue := niceMinY
+	maxValue := valuePerStep*(steps) + niceMinY
+	minValueY := 400 - 40
+	maxValueY := 400 - 40 - int64(steps)*heightPerStep
+
+	// main content
+
+	columns := (timestampEnd - timestampStart) / 300
+	columnWidth := (600 - 60 - 20) / columns
+
+	linear := func(i int64) float64 {
+		return float64(minValueY) - (float64(i)-float64(minValue))/float64(maxValue-minValue)*float64(minValueY-int(maxValueY))
+	}
+
+	previousY := -1
+	for column := range columns {
+		timestamp := timestampStart + column*300
+		var theMetric db.ServiceMetric
+		found := false
+		for _, m := range metrics {
+			if m.Timestamp == uint64(timestamp) {
+				theMetric = m
+				found = true
+				break
+			}
+		}
+		mask := image.Rect(60+2, 40, 600-20, 400-40)
+		if !found {
+			previousY = -1
+			drawFilledRectMask(img, 60+2+column*columnWidth, 40, columnWidth, 400-40-40, NO_DATA, mask)
+		} else {
+			drawFilledRectMask(img, 60+2+column*columnWidth, int(linear(theMetric.Max.Int64)), columnWidth, int(linear(theMetric.Min.Int64)-linear(theMetric.Max.Int64)), SMOKE, mask)
+			y := linear(theMetric.Median.Int64)
+			drawFilledRectMask(img, 60+2+column*columnWidth, int(y), columnWidth, 2, BLACK, mask)
+			if previousY >= 0 {
+				drawFilledRectMask(img, 60+2-1+column*columnWidth, min(previousY, int(y)), 2, max(previousY, int(y))-min(previousY, int(y))+2, BLACK, mask)
+			}
+			previousY = int(y)
+		}
+	}
+
+	// x axis
+
+	// encode to png
+
+	var buf bytes.Buffer
+	err = png.Encode(&buf, img)
+	if err != nil {
+		return fmt.Errorf("encode png: %w", err)
+	}
+
+	return c.Stream(http.StatusOK, "image/png", &buf)
+}
+
+func init() {
+	f, err := opentype.Parse(NOTOSANSSC)
+	if err != nil {
+		panic(err)
+	}
+
+	FONT16, err = opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    16,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	FONT12, err = opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    12,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	FONT20, err = opentype.NewFace(f, &opentype.FaceOptions{
+		Size:    20,
+		DPI:     72,
+		Hinting: font.HintingNone,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+}

@@ -21,6 +21,8 @@ func Route(g *echo.Group) {
 	g.GET("/servers/:id", view)
 	g.GET("/servers/:id/data", viewData)
 	g.GET("/incidents", viewIncidents)
+	g.GET("/network/:id", network)
+	g.GET("/network/graph", graph)
 
 	// auth
 

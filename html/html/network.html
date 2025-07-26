@@ -1,0 +1,20 @@
+{{ define "network" }}
+{{ template "header" . }}
+
+
+<a href="/servers/{{ .id }}" class="text-decoration-none" style="color: inherit;"><i class="bi bi-arrow-left-circle-fill"></i> Back</a>
+
+
+<div class="row ">
+
+    {{ $id := .id}}
+
+    {{ range .services }}
+    <div class="col-12 col-lg-6 mt-4">
+        <img src="/network/graph?from={{ $id }}&to={{ .Id }}" class="w-100">
+    </div>
+    {{ end }}
+
+</div>
+{{ template "footer" . }}
+{{ end }}
