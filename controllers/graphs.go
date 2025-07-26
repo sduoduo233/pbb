@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	_ "embed"
 
@@ -138,7 +139,11 @@ func graph(c echo.Context) error {
 	drawFilledRect(img, 0, 0, 600, 400, WHITE)
 
 	// title
-	drawText(img, "From "+server.Label+" to "+service.Label, FONT20, 0, 0, BLACK)
+	pingType := "ICMP Ping"
+	if service.Type == "tcp" {
+		pingType = "TCP Ping"
+	}
+	drawText(img, pingType+" from "+server.Label+" to "+service.Label, FONT20, 20, 0, BLACK)
 
 	// graph outline
 	drawFilledRect(img, 60, 40, 2, 400-40-40, BLACK)
@@ -260,6 +265,23 @@ func graph(c echo.Context) error {
 	}
 
 	// x axis
+
+	t := timestampStart / 600 * 600
+	x := 60
+	lastDraw := 0
+	for {
+		x += columnWidth
+		t += 300
+		if x > 600-20 {
+			break
+		}
+		if x-lastDraw > 50 {
+			drawFilledRect(img, int(x), 400-40, 2, 5, BLACK)
+			s := time.Unix(int64(t), 0).Format("15:04")
+			drawText(img, s, FONT12, x-measureWidth(FONT12, s)/2, 400-30, BLACK)
+			lastDraw = x
+		}
+	}
 
 	// encode to png
 
