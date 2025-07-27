@@ -195,22 +195,22 @@ func graph(c echo.Context) error {
 
 	if maxY-minY < 1000 {
 		ms = false
-		niceMinY = minY / 100 * 100
+		niceMinY = (minY/100 - 1) * 100
 		niceMaxY = (maxY/100 + 1) * 100
 	} else if maxY-minY < 30000 {
-		niceMinY = minY / 2000 * 2000
+		niceMinY = (minY/2000 - 1) * 2000
 		niceMaxY = (maxY/2000 + 1) * 2000
 	} else if maxY-minY < 50000 {
-		niceMinY = minY / 5000 * 5000
+		niceMinY = (minY/5000 - 1) * 5000
 		niceMaxY = (maxY/5000 + 1) * 5000
 	} else if maxY-minY < 100000 {
-		niceMinY = minY / 10000 * 10000
+		niceMinY = (minY/10000 - 1) * 10000
 		niceMaxY = (maxY/10000 + 1) * 10000
 	} else if maxY-minY < 300000 {
-		niceMinY = minY / 20000 * 20000
+		niceMinY = (minY/20000 - 1) * 20000
 		niceMaxY = (maxY/20000 + 1) * 20000
 	} else {
-		niceMinY = minY / 50000 * 50000
+		niceMinY = (minY/50000 - 1) * 50000
 		niceMaxY = (maxY/50000 + 1) * 50000
 	}
 
