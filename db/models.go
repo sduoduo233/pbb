@@ -2,7 +2,8 @@ package db
 
 import (
 	"database/sql"
-	"encoding/json"
+
+	"github.com/sduoduo233/pbb/controllers/types"
 )
 
 type User struct {
@@ -77,38 +78,12 @@ const (
 	IncidentStateResolved = "resolved"
 )
 
-// Nullable Int64 that overrides sql.NullInt64
-type NullInt64 struct {
-	sql.NullInt64
-}
-
-func (ni NullInt64) MarshalJSON() ([]byte, error) {
-	if ni.Valid {
-		return json.Marshal(ni.Int64)
-	}
-	return json.Marshal(nil)
-}
-
-func (ni *NullInt64) UnmarshalJSON(data []byte) error {
-	var i *int64
-	if err := json.Unmarshal(data, &i); err != nil {
-		return err
-	}
-	if i != nil {
-		ni.Valid = true
-		ni.Int64 = *i
-	} else {
-		ni.Valid = false
-	}
-	return nil
-}
-
 type Incident struct {
-	Id        int32     `db:"id" json:"id"`
-	ServerId  int32     `db:"server_id" json:"server_id"`
-	StartedAt int64     `db:"started_at" json:"started_at"`
-	EndedAt   NullInt64 `db:"ended_at" json:"ended_at"`
-	State     string    `db:"state" json:"state"`
+	Id        int32           `db:"id" json:"id"`
+	ServerId  int32           `db:"server_id" json:"server_id"`
+	StartedAt int64           `db:"started_at" json:"started_at"`
+	EndedAt   types.NullInt64 `db:"ended_at" json:"ended_at"`
+	State     string          `db:"state" json:"state"`
 }
 
 type IncidentWithServerLabel struct {
@@ -125,16 +100,16 @@ type Service struct {
 }
 
 type ServiceMetric struct {
-	Id        int32     `db:"id" json:"id"`
-	CreatedAt uint64    `db:"created_at" json:"created_at"`
-	Timestamp uint64    `db:"timestamp" json:"timestamp"`
-	From      int32     `db:"from" json:"from"`
-	To        int32     `db:"to" json:"to"`
-	Min       NullInt64 `db:"min" json:"min"`
-	Max       NullInt64 `db:"max" json:"max"`
-	Avg       NullInt64 `db:"avg" json:"avg"`
-	Median    NullInt64 `db:"median" json:"median"`
-	Loss      float32   `db:"loss" json:"loss"`
+	Id        int32           `db:"id" json:"id"`
+	CreatedAt uint64          `db:"created_at" json:"created_at"`
+	Timestamp uint64          `db:"timestamp" json:"timestamp"`
+	From      int32           `db:"from" json:"from"`
+	To        int32           `db:"to" json:"to"`
+	Min       types.NullInt64 `db:"min" json:"min"`
+	Max       types.NullInt64 `db:"max" json:"max"`
+	Avg       types.NullInt64 `db:"avg" json:"avg"`
+	Median    types.NullInt64 `db:"median" json:"median"`
+	Loss      float32         `db:"loss" json:"loss"`
 }
 
 type ServerService struct {

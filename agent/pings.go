@@ -9,15 +9,14 @@ import (
 
 	probing "github.com/prometheus-community/pro-bing"
 	"github.com/sduoduo233/pbb/controllers/types"
-	"github.com/sduoduo233/pbb/db"
 )
 
 func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32) {
 	r := types.ServiceMetric{
-		Min:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Max:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Avg:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Median:    db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Min:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Max:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Avg:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Median:    types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
 		Loss:      1,
 		Timestamp: timestamp,
 		To:        to,
@@ -71,10 +70,10 @@ func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int
 
 func tcpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32) {
 	r := types.ServiceMetric{
-		Min:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Max:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Avg:       db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
-		Median:    db.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Min:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Max:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Avg:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
+		Median:    types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
 		Loss:      1,
 		Timestamp: timestamp,
 		To:        to,
