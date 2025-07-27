@@ -95,8 +95,14 @@ func hexColor(str string) color.RGBA {
 func graph(c echo.Context) error {
 	from := c.QueryParam("from")
 	to := c.QueryParam("to")
-	timestampEnd := 1753357200
-	timestampStart := 1753348500
+
+	timestampEnd, err1 := strconv.Atoi(c.QueryParam("end"))
+	timestampStart, err2 := strconv.Atoi(c.QueryParam("start"))
+	if err1 != nil || err2 != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	timestampStart = timestampStart / 300 * 300
+	timestampEnd = timestampEnd / 300 * 300
 
 	user := GetUser(c)
 	showHidden := user != nil
@@ -125,10 +131,21 @@ func graph(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	var metrics []db.ServiceMetric
-	err = db.DB.Select(&metrics, "SELECT * FROM service_metrics WHERE `from` = ? AND `to` = ? AND timestamp <= ? AND timestamp >= ? ORDER BY timestamp", from, to, timestampEnd, timestampStart)
+	var allMetrics []db.ServiceMetric
+	err = db.DB.Select(&allMetrics, "SELECT * FROM service_metrics WHERE `from` = ? AND `to` = ? AND timestamp <= ? AND timestamp >= ? ORDER BY timestamp", from, to, timestampEnd, timestampStart)
 	if err != nil {
 		return fmt.Errorf("db: %w", err)
+	}
+
+	// drop metrics
+
+	var dropInterval int = 1
+	if len(allMetrics) > 300 {
+		dropInterval += len(allMetrics)/300 + 1
+	}
+	var metrics []db.ServiceMetric
+	for i := 0; i < len(allMetrics); i += dropInterval {
+		metrics = append(metrics, allMetrics[i])
 	}
 
 	// render
@@ -150,24 +167,27 @@ func graph(c echo.Context) error {
 	drawFilledRect(img, 60, 400-40, 600-60-20, 2, BLACK)
 
 	// y axis
-	maxY := slices.MaxFunc(metrics, func(a, b db.ServiceMetric) int {
-		return int(a.Max.Int64) - int(b.Max.Int64)
-	}).Max.Int64
-	minY := max(slices.MinFunc(metrics, func(a, b db.ServiceMetric) int {
-		return int(a.Min.Int64) - int(b.Min.Int64)
-	}).Min.Int64, 0)
+	var maxY, minY int64
+	if len(metrics) > 0 {
+		maxY = slices.MaxFunc(metrics, func(a, b db.ServiceMetric) int {
+			return int(a.Max.Int64) - int(b.Max.Int64)
+		}).Max.Int64
+		minY = max(slices.MinFunc(metrics, func(a, b db.ServiceMetric) int {
+			return int(a.Min.Int64) - int(b.Min.Int64)
+		}).Min.Int64, 0)
 
-	medianSum := 0
-	for _, m := range metrics {
-		medianSum += int(m.Median.Int64)
-	}
-	avgMedian := medianSum / len(metrics)
+		medianSum := 0
+		for _, m := range metrics {
+			medianSum += int(m.Median.Int64)
+		}
+		avgMedian := medianSum / len(metrics)
 
-	if maxY > int64(avgMedian)*5 {
-		maxY = int64(avgMedian) * 5
-	}
-	if minY < int64(avgMedian)/5 {
-		minY = int64(avgMedian) / 5
+		if maxY > int64(avgMedian)*5 {
+			maxY = int64(avgMedian) * 5
+		}
+		if minY < int64(avgMedian)/5 {
+			minY = int64(avgMedian) / 5
+		}
 	}
 
 	ms := true
@@ -177,6 +197,9 @@ func graph(c echo.Context) error {
 		ms = false
 		niceMinY = minY / 100 * 100
 		niceMaxY = (maxY/100 + 1) * 100
+	} else if maxY-minY < 30000 {
+		niceMinY = minY / 2000 * 2000
+		niceMaxY = (maxY/2000 + 1) * 2000
 	} else if maxY-minY < 50000 {
 		niceMinY = minY / 5000 * 5000
 		niceMaxY = (maxY/5000 + 1) * 5000
@@ -194,11 +217,10 @@ func graph(c echo.Context) error {
 	valuePerStep := int64(0)
 	if niceMaxY-niceMinY <= 500 {
 		valuePerStep = 20
-
 	} else if niceMaxY-niceMinY <= 1000 {
 		valuePerStep = 100
 	} else if niceMaxY-niceMinY <= 10000 {
-		valuePerStep = 2000
+		valuePerStep = 1000
 	} else if niceMaxY-niceMinY <= 50000 {
 		valuePerStep = 5000
 	} else if niceMaxY-niceMinY <= 100000 {
@@ -213,6 +235,7 @@ func graph(c echo.Context) error {
 
 	steps := (niceMaxY-niceMinY)/int64(valuePerStep) + 1
 	heightPerStep := (400 - 40 - 40) / steps
+
 	for i := range steps + 1 {
 		y := int(400 - 40 - int64(i)*heightPerStep)
 		drawFilledRect(img, 60-5, y, 5, 2, BLACK)
@@ -230,7 +253,7 @@ func graph(c echo.Context) error {
 
 	// main content
 
-	columns := (timestampEnd - timestampStart) / 300
+	columns := (timestampEnd - timestampStart) / (300 * dropInterval)
 	columnWidth := (600 - 60 - 20) / columns
 
 	linear := func(i int64) float64 {
@@ -239,10 +262,10 @@ func graph(c echo.Context) error {
 
 	previousY := -1
 	for column := range columns {
-		timestamp := timestampStart + column*300
+		timestamp := timestampStart + column*300*dropInterval
 		var theMetric db.ServiceMetric
 		found := false
-		for _, m := range metrics {
+		for _, m := range allMetrics {
 			if m.Timestamp == uint64(timestamp) {
 				theMetric = m
 				found = true
@@ -271,7 +294,7 @@ func graph(c echo.Context) error {
 	lastDraw := 0
 	for {
 		x += columnWidth
-		t += 300
+		t += 300 * dropInterval
 		if x > 600-20 {
 			break
 		}

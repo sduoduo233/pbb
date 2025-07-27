@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sduoduo233/pbb/db"
@@ -35,5 +36,19 @@ func network(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.Render(http.StatusOK, "network", D{"id": id, "services": relatedServices})
+	duration := c.QueryParam("duration")
+	if duration == "" {
+		duration = "3h"
+	}
+	start := time.Now().Add(-3 * time.Hour).Unix()
+	switch c.QueryParam("duration") {
+	case "3h":
+		start = time.Now().Add(-3 * time.Hour).Unix()
+	case "30h":
+		start = time.Now().Add(-30 * time.Hour).Unix()
+	case "3d":
+		start = time.Now().Add(-3 * 24 * time.Hour).Unix()
+	}
+
+	return c.Render(http.StatusOK, "network", D{"id": id, "services": relatedServices, "end": time.Now().Unix(), "start": start, "duration": duration})
 }

@@ -4,14 +4,23 @@
 
 <a href="/servers/{{ .id }}" class="text-decoration-none" style="color: inherit;"><i class="bi bi-arrow-left-circle-fill"></i> Back</a>
 
+<form method="get" action="">
+    <select class="w-auto" name="duration" onchange="$('form').submit()" value="{{ .duration }}">
+        <option value="3h">3 Hours</option>
+        <option value="30h">30 Hours</option>
+        <option value="3d">3 Days</option>
+    </select>
+</form>
 
 <div class="row ">
 
     {{ $id := .id}}
+    {{ $start := .start}}
+    {{ $end := .end}}
 
     {{ range .services }}
     <div class="col-12 col-lg-6 mt-4">
-        <img src="/network/graph?from={{ $id }}&to={{ .Id }}" class="w-100">
+        <img src="/network/graph?from={{ $id }}&to={{ .Id }}&start={{ $start }}&end={{ $end }}" class="w-100">
     </div>
     {{ end }}
 
