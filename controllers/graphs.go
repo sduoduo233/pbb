@@ -298,6 +298,9 @@ func graph(c echo.Context) error {
 		if x > 600-20 {
 			break
 		}
+		if t > timestampEnd {
+			continue
+		}
 		if x-lastDraw > 50 {
 			drawFilledRect(img, int(x), 400-40, 2, 5, BLACK)
 			s := time.Unix(int64(t), 0).Format("15:04")
