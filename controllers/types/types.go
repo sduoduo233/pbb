@@ -37,3 +37,10 @@ type ServiceMetric struct {
 	Median    db.NullInt64 `json:"median"`
 	Loss      float32      `json:"loss"`
 }
+
+type Service struct {
+	Id    int32  `json:"id"`
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Host  string `json:"host"`
+}

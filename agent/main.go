@@ -22,7 +22,6 @@ import (
 	"github.com/shirou/gopsutil/v4/net"
 
 	"github.com/sduoduo233/pbb/controllers/types"
-	"github.com/sduoduo233/pbb/db"
 	"github.com/sduoduo233/pbb/update"
 )
 
@@ -281,7 +280,7 @@ func reportSystemInfo() error {
 	return nil
 }
 
-var relatedServices = make([]db.Service, 0)
+var relatedServices = make([]types.Service, 0)
 var serviceMetrics = make([]types.ServiceMetric, 0)
 
 func pingServices() error {
