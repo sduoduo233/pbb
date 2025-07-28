@@ -258,7 +258,7 @@ func graph(c echo.Context) error {
 	var dropInterval int = 1
 	if columns > 300 {
 		dropInterval += columns/300 + 1
-		columnWidth = (600 - 60 - 20) / columns * dropInterval
+		columnWidth = (600 - 60 - 20) / (columns / dropInterval)
 	}
 
 	linear := func(i int64) float64 {
