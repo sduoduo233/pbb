@@ -96,6 +96,13 @@ func graph(c echo.Context) error {
 	from := c.QueryParam("from")
 	to := c.QueryParam("to")
 
+	reqStart := time.Now()
+	reqTimeout := func() {
+		if time.Since(reqStart) > time.Second*5 {
+			panic("graph timeout")
+		}
+	}
+
 	timestampEnd, err1 := strconv.Atoi(c.QueryParam("end"))
 	timestampStart, err2 := strconv.Atoi(c.QueryParam("start"))
 	if err1 != nil || err2 != nil {
@@ -237,6 +244,8 @@ func graph(c echo.Context) error {
 	heightPerStep := (400 - 40 - 40) / steps
 
 	for i := range steps + 1 {
+		reqTimeout()
+
 		y := int(400 - 40 - int64(i)*heightPerStep)
 		drawFilledRect(img, 60-5, y, 5, 2, BLACK)
 		str := strconv.Itoa(int(valuePerStep*i+niceMinY)) + "μs"
@@ -262,6 +271,8 @@ func graph(c echo.Context) error {
 
 	previousY := -1
 	for column := range columns {
+		reqTimeout()
+
 		timestamp := timestampStart + column*300*dropInterval
 		var theMetric db.ServiceMetric
 		found := false
@@ -271,6 +282,7 @@ func graph(c echo.Context) error {
 				found = true
 				break
 			}
+
 		}
 		mask := image.Rect(60+2, 40, 600-20, 400-40)
 		if !found {
@@ -293,6 +305,8 @@ func graph(c echo.Context) error {
 	x := 60
 	lastDraw := 0
 	for {
+		reqTimeout()
+
 		x += columnWidth
 		t += 300 * dropInterval
 		if x > 600-20 {
