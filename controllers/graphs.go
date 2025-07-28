@@ -138,21 +138,10 @@ func graph(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	var allMetrics []db.ServiceMetric
-	err = db.DB.Select(&allMetrics, "SELECT * FROM service_metrics WHERE `from` = ? AND `to` = ? AND timestamp <= ? AND timestamp >= ? ORDER BY timestamp", from, to, timestampEnd, timestampStart)
+	var metrics []db.ServiceMetric
+	err = db.DB.Select(&metrics, "SELECT * FROM service_metrics WHERE `from` = ? AND `to` = ? AND timestamp <= ? AND timestamp >= ? ORDER BY timestamp", from, to, timestampEnd, timestampStart)
 	if err != nil {
 		return fmt.Errorf("db: %w", err)
-	}
-
-	// drop metrics
-
-	var dropInterval int = 1
-	if len(allMetrics) > 300 {
-		dropInterval += len(allMetrics)/300 + 1
-	}
-	var metrics []db.ServiceMetric
-	for i := 0; i < len(allMetrics); i += dropInterval {
-		metrics = append(metrics, allMetrics[i])
 	}
 
 	// render
@@ -262,21 +251,28 @@ func graph(c echo.Context) error {
 
 	// main content
 
-	columns := (timestampEnd - timestampStart) / (300 * dropInterval)
+	columns := (timestampEnd - timestampStart) / 300
 	columnWidth := (600 - 60 - 20) / columns
+
+	// drop metrics
+	var dropInterval int = 1
+	if columns > 300 {
+		dropInterval += len(metrics)/300 + 1
+		columns /= dropInterval
+	}
 
 	linear := func(i int64) float64 {
 		return float64(minValueY) - (float64(i)-float64(minValue))/float64(maxValue-minValue)*float64(minValueY-int(maxValueY))
 	}
 
 	previousY := -1
-	for column := range columns {
+	for column := 0; column < columns; column += dropInterval {
 		reqTimeout()
 
-		timestamp := timestampStart + column*300*dropInterval
+		timestamp := timestampStart + column*300
 		var theMetric db.ServiceMetric
 		found := false
-		for _, m := range allMetrics {
+		for _, m := range metrics {
 			if m.Timestamp == uint64(timestamp) {
 				theMetric = m
 				found = true
@@ -308,7 +304,7 @@ func graph(c echo.Context) error {
 		reqTimeout()
 
 		if columnWidth == 0 {
-			panic(fmt.Sprintf("zero column width. drop interval = %d, len(metrics) = %d, len(allMetrics) = %d, columns = %d", dropInterval, len(metrics), len(allMetrics), columns))
+			panic(fmt.Sprintf("zero column width. drop interval = %d, len(metrics) = %d, columns = %d", dropInterval, len(metrics), columns))
 		}
 
 		x += columnWidth
