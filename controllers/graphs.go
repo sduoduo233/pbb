@@ -257,7 +257,7 @@ func graph(c echo.Context) error {
 	// drop metrics
 	var dropInterval int = 1
 	if columns > 300 {
-		dropInterval += len(metrics)/300 + 1
+		dropInterval += columns/300 + 1
 		columns /= dropInterval
 	}
 
