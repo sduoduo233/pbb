@@ -32,6 +32,7 @@ func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int
 	pinger.ResolveTimeout = time.Second * 5
 	pinger.Timeout = time.Minute
 	pinger.RecordRtts = true
+	pinger.SetPrivileged(true)
 
 	err := pinger.Resolve()
 	if err != nil {
