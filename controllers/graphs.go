@@ -307,6 +307,10 @@ func graph(c echo.Context) error {
 	for {
 		reqTimeout()
 
+		if columnWidth == 0 {
+			panic(fmt.Sprintf("zero column width. drop interval = %d, len(metrics) = %d, len(allMetrics) = %d, columns = %d", dropInterval, len(metrics), len(allMetrics), columns))
+		}
+
 		x += columnWidth
 		t += 300 * dropInterval
 		if x > 600-20 {
