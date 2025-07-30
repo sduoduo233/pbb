@@ -273,8 +273,18 @@ func graph(c echo.Context) error {
 	}
 
 	lossToColor := func(loss float32) color.RGBA {
-		k := (1 - loss) * (1 - loss)
-		return color.RGBA{A: 255, R: uint8(200 * (1 - k)), G: uint8(255 * k), B: 0}
+		colorTable := []struct {
+			threshold float32
+			color     string
+		}{{0, "26ff00"}, {0.05, "00b8ff"}, {0.1, "0059ff"}, {0.15, "7e00ff"}, {0.25, "ff00ff"}, {0.5, "ff5500"}, {0.95, "ff0000"}, {1, "a00000"}}
+
+		for _, v := range colorTable {
+			if loss <= v.threshold {
+				return hexColor(v.color)
+			}
+		}
+
+		return color.RGBA{A: 255, R: 0, G: 0, B: 0}
 	}
 
 	indexMetrics := 0

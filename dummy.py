@@ -19,10 +19,10 @@ for t in range(now - 3 * 24 * 3600, now, 300):
     minn = int(y * 200 + 1000)
     maxx = int(y * 200 + 1500)
     median = int(minn / 2 + maxx / 2)
-    loss = max(math.sin(t / 3600 / 3), 0.0)
+    loss = (t % (3600 * 4)) / (3600 * 4)
 
-    #if t // 3600 & 1:
-        #continue
+    # if t // 3600 & 1:
+    # continue
 
     cur.execute(
         f"INSERT INTO service_metrics (created_at, timestamp, `from`, `to`, min, max, loss, avg, median) VALUES ({t}, {t}, {1}, {1}, {minn}, {maxx}, {loss}, {int(sum(l)/20)}, {median})"
