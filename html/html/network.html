@@ -25,5 +25,14 @@
     {{ end }}
 
 </div>
+
+<script>
+    $(function(){
+        $("img").each(function(){
+            $(this).attr("src", $(this).attr("src") + "&tz=" + (-new Date().getTimezoneOffset()))
+        })
+    })
+</script>
+
 {{ template "footer" . }}
 {{ end }}

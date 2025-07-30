@@ -114,6 +114,12 @@ func graph(c echo.Context) error {
 	user := GetUser(c)
 	showHidden := user != nil
 
+	timeZoneOffset, err3 := strconv.Atoi(c.QueryParam("tz"))
+	if err3 != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	timeZoneOffset *= 60 // convert minutes to seconds
+
 	// fetch data
 
 	var server db.Server
@@ -246,81 +252,98 @@ func graph(c echo.Context) error {
 
 	minValue := niceMinY
 	maxValue := valuePerStep*(steps) + niceMinY
-	minValueY := 400 - 40
+	minValueY := int64(400 - 40)
 	maxValueY := 400 - 40 - int64(steps)*heightPerStep
 
 	// main content
 
-	columns := (timestampEnd - timestampStart) / 300
-	columnWidth := (600 - 60 - 20) / columns
-
-	// drop metrics
-	var dropInterval int = 1
-	if columns > 300 {
-		dropInterval += columns/300 + 1
-		columnWidth = (600 - 60 - 20) / (columns / dropInterval)
+	linear := func(value int64, x0 int64, x1 int64, y0 int64, y1 int64) int {
+		// linear interpolate 'value' and round to the nearest int
+		return int(float64(value-x0)*float64(y1-y0)/float64(x1-x0) + float64(y0) + 0.5)
 	}
 
-	linear := func(i int64) float64 {
-		return float64(minValueY) - (float64(i)-float64(minValue))/float64(maxValue-minValue)*float64(minValueY-int(maxValueY))
+	linearY := func(i int64) int {
+		// map latency to y-coordinate
+		return linear(i, minValue, maxValue, minValueY, maxValueY)
 	}
 
-	previousY := -1
-	for column := 0; column < columns; column += dropInterval {
-		reqTimeout()
+	linearT := func(x int) int {
+		// map x-coordinate to timestamp
+		return linear(int64(x), 60+2, 600-20, int64(timestampStart), int64(timestampEnd))
+	}
 
-		timestamp := timestampStart + column*300
-		var theMetric db.ServiceMetric
+	lossToColor := func(loss float32) color.RGBA {
+		k := (1 - loss) * (1 - loss)
+		return color.RGBA{A: 255, R: uint8(200 * (1 - k)), G: uint8(255 * k), B: 0}
+	}
+
+	indexMetrics := 0
+	for x := 60 + 2; x < 600-20; x += 1 {
+		timestamp := linearT(x) / 300 * 300
+
+		var theMetrics db.ServiceMetric
 		found := false
-		for _, m := range metrics {
-			if m.Timestamp == uint64(timestamp) {
-				theMetric = m
+		for ; indexMetrics < len(metrics); indexMetrics += 1 {
+			theMetrics = metrics[indexMetrics]
+			if int(theMetrics.Timestamp) == timestamp {
 				found = true
 				break
 			}
 
-		}
-		mask := image.Rect(60+2, 40, 600-20, 400-40)
-		if !found {
-			previousY = -1
-			drawFilledRectMask(img, 60+2+column*columnWidth, 40, columnWidth, 400-40-40, NO_DATA, mask)
-		} else {
-			drawFilledRectMask(img, 60+2+column*columnWidth, int(linear(theMetric.Max.Int64)), columnWidth, int(linear(theMetric.Min.Int64)-linear(theMetric.Max.Int64)), SMOKE, mask)
-			y := linear(theMetric.Median.Int64)
-			drawFilledRectMask(img, 60+2+column*columnWidth, int(y), columnWidth, 2, BLACK, mask)
-			if previousY >= 0 {
-				drawFilledRectMask(img, 60+2-1+column*columnWidth, min(previousY, int(y)), 2, max(previousY, int(y))-min(previousY, int(y))+2, BLACK, mask)
+			if int(theMetrics.Timestamp) > timestamp {
+				found = false
+				break
 			}
-			previousY = int(y)
+		}
+
+		mask := image.Rect(60+2, 40, 600-20, 400-40)
+
+		if found {
+			drawFilledRectMask(img, x, linearY(theMetrics.Max.Int64)+1, 1, linearY(theMetrics.Min.Int64)-linearY(theMetrics.Max.Int64), SMOKE, mask)
+			drawFilledRectMask(img, x, linearY(theMetrics.Median.Int64), 1, 2, lossToColor(theMetrics.Loss), mask)
+		} else {
+			drawFilledRectMask(img, x, 40, 1, 400-40-40, NO_DATA, mask)
 		}
 	}
 
-	// x axis
+	// draw x axis ticks
 
-	t := timestampStart / 600 * 600
-	x := 60
-	lastDraw := 0
-	for {
-		reqTimeout()
+	tickTable := []int{300, 600, 1800, 3600, 3600 * 2, 3600 * 4, 3600 * 8}
 
-		if columnWidth == 0 {
-			panic(fmt.Sprintf("zero column width. drop interval = %d, len(metrics) = %d, columns = %d", dropInterval, len(metrics), columns))
-		}
+	tickInterval := 3600 * 24
 
-		x += columnWidth
-		t += 300 * dropInterval
-		if x > 600-20 {
+	for _, v := range tickTable {
+		if float64(600-60-20)/float64(timestampEnd-timestampStart)*float64(v) > 50 {
+			tickInterval = v
 			break
 		}
-		if t > timestampEnd {
-			continue
+	}
+
+	linearX := func(t int) int {
+		// map timestamp x-coordinate
+		return linear(int64(t), int64(timestampStart), int64(timestampEnd), 60+2, 600-20)
+	}
+
+	t := (timestampStart + tickInterval - 1) / tickInterval * tickInterval
+
+	for ; ; t += tickInterval {
+		x := linearX(t)
+
+		if x >= 600-20 {
+			break
 		}
-		if x-lastDraw > 50 {
-			drawFilledRect(img, int(x), 400-40, 2, 5, BLACK)
-			s := time.Unix(int64(t), 0).Format("15:04")
-			drawText(img, s, FONT12, x-measureWidth(FONT12, s)/2, 400-30, BLACK)
-			lastDraw = x
+
+		drawFilledRect(img, int(x), 400-40, 2, 5, BLACK)
+
+		tLocal := time.Unix(int64(t), 0).In(time.FixedZone("", timeZoneOffset))
+
+		var s string
+		if tickInterval < 3600*24 {
+			s = tLocal.Format("15:04")
+		} else {
+			s = tLocal.Format("01-02")
 		}
+		drawText(img, s, FONT12, x-measureWidth(FONT12, s)/2, 400-30, BLACK)
 	}
 
 	// encode to png
