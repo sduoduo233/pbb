@@ -106,7 +106,8 @@ func graph(c echo.Context) error {
 	timestampEnd, err1 := strconv.Atoi(c.QueryParam("end"))
 	timestampStart, err2 := strconv.Atoi(c.QueryParam("start"))
 	if err1 != nil || err2 != nil {
-		return c.String(http.StatusBadRequest, "bad request")
+		timestampEnd = int(time.Now().Unix())
+		timestampStart = int(time.Now().Add(-time.Hour * 30).Unix())
 	}
 	timestampStart = timestampStart / 300 * 300
 	timestampEnd = timestampEnd / 300 * 300
