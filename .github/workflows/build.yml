@@ -48,7 +48,7 @@ jobs:
 
     - name: Sign binary
       run: |
-        cat << EOF > privkey.pem
+        cat << EOF > privkey.txt
         ${{ secrets.RSA_PRIVATE_KEY }}
         EOF
         openssl dgst -sha256 -sign privkey.txt bin/agent-386 > bin/agent-386.sig
