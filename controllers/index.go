@@ -18,7 +18,7 @@ func indexServers(c echo.Context) error {
 
 	view := c.QueryParam("view")
 	if view != "cards" && view != "table" {
-		view = "cards"
+		view = "table"
 	}
 
 	type Server struct {
