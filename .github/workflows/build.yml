@@ -47,10 +47,10 @@ jobs:
 
 
     - name: Sign binary
-      env:
-        RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
       run: |
-        echo $RSA_PRIVATE_KEY > privkey.txt
+        cat << EOF > privkey.pem
+        ${{ secrets.RSA_PRIVATE_KEY }}
+        EOF
         openssl dgst -sha256 -sign privkey.txt bin/agent-386 > bin/agent-386.sig
         openssl dgst -sha256 -sign privkey.txt bin/agent-amd64 > bin/agent-amd64.sig
         openssl dgst -sha256 -sign privkey.txt bin/agent-arm64 > bin/agent-arm64.sig

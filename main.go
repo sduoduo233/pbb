@@ -25,7 +25,7 @@ func main() {
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				// ignore polling requests
-				if !slices.Contains([]string{"/agent/metric", "/agent/info", "/servers", "/servers/:id/data"}, v.RoutePath) {
+				if !slices.Contains([]string{"/agent/metric", "/agent/services", "/agent/info", "/servers", "/servers/:id/data"}, v.RoutePath) {
 					slog.Info("request", "method", v.Method, "uri", v.URI, "status", v.Status)
 				}
 			} else {
