@@ -1,6 +1,7 @@
 package update
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"io"
@@ -11,8 +12,46 @@ import (
 	"syscall"
 )
 
+const RSA_PUBLIC_KEY = `
+-----BEGIN PUBLIC KEY-----
+MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAomjdVuUgZK7MfSmho6Rq
+Ql5SvCDf1n9YCg/1Ofi2Q5chnGkIF1mENzJif50OstbElBEzrpojc8qXv8NCIY4G
+QK18BmpLFVLeeX4jGeu6A2CLxPsvldqGcf2+sOMS7OxlrGwsOt0Zur7F4eM2ViHg
+Jb7aVenmGFaFqt37XR0N5h/esf1afGhD95K2tO56f1epM7hFbJEn8pgQff/AzD7w
+Z3kt/iivH0OMvGcpgnJAGeBdmndHqp1Aq8+J3uPKsDxNELlb9b52fSTmI0qUd064
+Qbt4aI896885AAEopp+pfDC7BV2mXLwTwGPkSycLvRc4ChfRFgl1EvG5GnaN6CBe
+FSBsuVeauB6kgJsoDYtYgtiKU7DtbNfS99eTj/04nEv4tXvJct73SA5mvBpbSikk
+fCAeewOeRKH1pIAn7Lov3PL3aHN9lXzb+0jSHjEdqEp1DVcouPcJo+0/+t6P8PRq
+GnaWNZfx/Tw5rIzaRA1XmMybvffvxwy+KrgA9RzAGnrbQpSLfYw1V5NFmP0SDMzc
+mcrzn1z6NEbNY7R6m4qNaCndKwtPUk31+o63I1YgRrRoEnD3obWsFjQ07UtsSl07
+OOh+lxE+OSIIrZVMde5SoibTBaiB0wYMLE8/7qZIr4TfCKJk8MVcHC1sdcM2O08s
+b8HaxLp1R7RphvYjI2fRPOECAwEAAQ==
+-----END PUBLIC KEY-----`
+
 //go:embed version.txt
 var CURRENT_VERSION string
+
+func downloadFile(url string) ([]byte, error) {
+	req, _ := http.NewRequest("GET", url, nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("http: bad status code %d", resp.StatusCode)
+	}
+
+	binaryBuffer := bytes.Buffer{}
+
+	_, err = io.Copy(&binaryBuffer, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("write binary: %w", err)
+	}
+
+	return binaryBuffer.Bytes(), nil
+}
 
 func getLatestVersion() (string, error) {
 	resp, err := http.Get("https://dl.exec.li/version.txt")
@@ -62,7 +101,7 @@ func AutoUpdate(name string) error {
 		if c == 0 {
 			break
 		}
-		unameArch += string(c)
+		unameArch += string(rune(c))
 	}
 
 	if unameArch == "x86_64" {
@@ -80,17 +119,23 @@ func AutoUpdate(name string) error {
 	// download binary
 
 	slog.Info("download binary", "url", downloadUrl)
-
-	req, _ := http.NewRequest("GET", downloadUrl, nil)
-	resp, err := http.DefaultClient.Do(req)
+	binaryBytes, err := downloadFile(downloadUrl)
 	if err != nil {
-		return fmt.Errorf("http: %w", err)
+		return fmt.Errorf("download binary: %w", err)
 	}
-	defer resp.Body.Close()
+	binarySig, err := downloadFile(downloadUrl + ".sig")
+	if err != nil {
+		return fmt.Errorf("download sig: %w", err)
+	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("http: bad status code %d", resp.StatusCode)
+	// check signature
+
+	err = Verify(binaryBytes, RSA_PUBLIC_KEY, binarySig)
+	if err != nil {
+		return fmt.Errorf("bad signature: %w", err)
 	}
+
+	slog.Info("signature verification passed")
 
 	// replace current binary
 
@@ -110,11 +155,9 @@ func AutoUpdate(name string) error {
 	if err != nil {
 		return fmt.Errorf("create new binary: %w", err)
 	}
-
-	_, err = io.Copy(f, resp.Body)
+	_, err = f.Write(binaryBytes)
 	if err != nil {
-		f.Close()
-		return fmt.Errorf("write binary: %w", err)
+		return fmt.Errorf("write new binary: %w", err)
 	}
 	f.Close()
 

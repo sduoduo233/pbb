@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential gcc-aarch64-linux-gnu lftp
+        sudo apt-get install -y build-essential gcc-aarch64-linux-gnu lftp openssl
 
     - uses: actions/setup-go@v5
       with:
@@ -44,6 +44,19 @@ jobs:
         CGO_ENABLED=0 GOARCH=amd64 go build -o bin/agent-amd64 -trimpath -ldflags '-s -w' ./agent
         CGO_ENABLED=0 GOARCH=arm64 go build -o bin/agent-arm64 -trimpath -ldflags '-s -w' ./agent
         CGO_ENABLED=0 GOARCH=arm GOARM=7 go build -o bin/agent-arm32-v7a -trimpath -ldflags '-s -w' ./agent
+
+
+    - name: Sign binary
+      env:
+        RSA_PRIVATE_KEY: ${{ secrets.RSA_PRIVATE_KEY }}
+      run: |
+        echo $RSA_PRIVATE_KEY > privkey.txt
+        openssl dgst -sha256 -sign privkey.txt bin/agent-386 > bin/agent-386.sig
+        openssl dgst -sha256 -sign privkey.txt bin/agent-amd64 > bin/agent-amd64.sig
+        openssl dgst -sha256 -sign privkey.txt bin/agent-arm64 > bin/agent-arm64.sig
+        openssl dgst -sha256 -sign privkey.txt bin/agent-arm32-v7a > bin/agent-arm32-v7a.sig
+        openssl dgst -sha256 -sign privkey.txt bin/hub-amd64 > bin/hub-amd64.sig
+        openssl dgst -sha256 -sign privkey.txt bin/hub-arm64 > bin/hub-arm64.sig
 
     - uses: actions/upload-artifact@v4
       with:
