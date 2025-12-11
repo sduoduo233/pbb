@@ -143,7 +143,7 @@ func index(c echo.Context) error {
 
 	view := c.QueryParam("view")
 	if view != "cards" && view != "table" {
-		view = "cards"
+		view = "table"
 	}
 
 	return c.Render(http.StatusOK, "index", D{"view": view})
