@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sduoduo233/pbb/db"
@@ -59,6 +60,19 @@ func auth(next echo.HandlerFunc) echo.HandlerFunc {
 			if !errors.Is(err, sql.ErrNoRows) {
 				return fmt.Errorf("db: %w", err)
 			}
+			return next(c)
+		}
+
+		if time.Now().Unix()-t.CreatedAt > 24*60*60 {
+			// expire stale tokens and drop client cookie
+			_, _ = db.DB.Exec("DELETE FROM tokens WHERE id = $1", t.Id)
+			c.SetCookie(&http.Cookie{
+				Name:     "TOKEN",
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+			})
 			return next(c)
 		}
 
