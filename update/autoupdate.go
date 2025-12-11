@@ -45,7 +45,9 @@ func downloadFile(url string) ([]byte, error) {
 
 	binaryBuffer := bytes.Buffer{}
 
-	_, err = io.Copy(&binaryBuffer, resp.Body)
+	limitedReader := io.LimitReader(resp.Body, 100*1024*1024) // 100 MB
+
+	_, err = io.Copy(&binaryBuffer, limitedReader)
 	if err != nil {
 		return nil, fmt.Errorf("write binary: %w", err)
 	}
