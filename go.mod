@@ -6,12 +6,12 @@ require (
 	github.com/go-co-op/gocron/v2 v2.18.2
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
-	github.com/labstack/echo/v4 v4.13.4
+	github.com/labstack/echo/v4 v4.14.0
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/prometheus-community/pro-bing v0.7.0
 	github.com/shirou/gopsutil/v4 v4.25.11
-	golang.org/x/crypto v0.45.0
-	golang.org/x/image v0.33.0
+	golang.org/x/crypto v0.46.0
+	golang.org/x/image v0.34.0
 )
 
 require (
@@ -30,9 +30,9 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 )
