@@ -40,7 +40,7 @@ func network(c echo.Context) error {
 	if duration == "" {
 		duration = "30h"
 	}
-	start := time.Now().Add(-3 * time.Hour).Unix()
+	start := time.Now().Add(-30 * time.Hour).Unix()
 	switch c.QueryParam("duration") {
 	case "3h":
 		start = time.Now().Add(-3 * time.Hour).Unix()

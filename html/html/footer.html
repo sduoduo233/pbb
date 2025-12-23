@@ -3,7 +3,9 @@
 <script>
     $(function() {
         $("select").each(function() {
-            $(this).val($(this).attr("value"))
+            if ($(this).attr("value")) {
+                $(this).val($(this).attr("value"))
+            }
         })
 
         $("timestamp").each(function() {
