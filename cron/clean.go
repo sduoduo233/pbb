@@ -18,7 +18,11 @@ func clean() {
 	rowsAffected, err := r.RowsAffected()
 	if err != nil {
 		slog.Error("clean server_metrics", "err", err)
-		return
+	}
+
+	_, err = db.DB.Exec("vacuum")
+	if err != nil {
+		slog.Error("clean vacuum", "err", err)
 	}
 
 	slog.Info("old records deleted", "rows deleted", rowsAffected)
