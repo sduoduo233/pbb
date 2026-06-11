@@ -125,5 +125,11 @@ func service(c echo.Context) error {
 		return fmt.Errorf("db: %w", err)
 	}
 
-	return c.JSON(http.StatusOK, relatedServices)
+	return c.JSON(http.StatusOK, struct {
+		Services      []db.Service `json:"services"`
+		PingInterface string       `json:"ping_interface"`
+	}{
+		Services:      relatedServices,
+		PingInterface: s.PingInterface.String,
+	})
 }

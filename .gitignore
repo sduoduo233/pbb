@@ -3,3 +3,5 @@ __debug*
 *.db
 bin
 pbb
+agent/agent
+opencode.jsonc

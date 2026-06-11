@@ -11,7 +11,7 @@ import (
 	"github.com/sduoduo233/pbb/controllers/types"
 )
 
-func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32) {
+func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32, interfaceName string) {
 	r := types.ServiceMetric{
 		Min:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
 		Max:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
@@ -33,16 +33,19 @@ func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int
 	pinger.Timeout = time.Minute
 	pinger.RecordRtts = true
 	pinger.SetPrivileged(true)
+	if interfaceName != "" {
+		pinger.InterfaceName = interfaceName
+	}
 
 	err := pinger.Resolve()
 	if err != nil {
-		slog.Debug("ping resolve error", "err", err, "host", host)
+		slog.Debug("ping resolve error", "err", err, "host", host, "interface", interfaceName)
 		return
 	}
 
 	err = pinger.Run()
 	if err != nil {
-		slog.Debug("ping error", "err", err, "host", host)
+		slog.Debug("ping error", "err", err, "host", host, "interface", interfaceName)
 		return
 	}
 
@@ -69,7 +72,7 @@ func icmpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int
 	r.Median.Int64 = rtts[len(rtts)/2]
 }
 
-func tcpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32) {
+func tcpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int32, interfaceName string) {
 	r := types.ServiceMetric{
 		Min:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
 		Max:       types.NullInt64{NullInt64: sql.NullInt64{Valid: false}},
@@ -85,11 +88,16 @@ func tcpPing(ch chan types.ServiceMetric, host string, timestamp uint64, to int3
 
 	rtts := make([]int64, 0, 5)
 
+	var dialer net.Dialer
+	if interfaceName != "" {
+		dialer.Control = bindToDevice(interfaceName)
+	}
+
 	for range 5 {
 		start := time.Now()
-		conn, err := net.DialTimeout("tcp", host, time.Second*10)
+		conn, err := dialer.Dial("tcp", host)
 		if err != nil {
-			slog.Debug("tcp ping dial error", "err", err, "host", host)
+			slog.Debug("tcp ping dial error", "err", err, "host", host, "interface", interfaceName)
 			continue
 		}
 		err = conn.Close()

@@ -29,6 +29,14 @@ func Init() {
 		panic(err)
 	}
 
+	if !columnExists("servers", "ping_interface") {
+		_, err = DB.Exec("ALTER TABLE servers ADD COLUMN ping_interface TEXT")
+		if err != nil {
+			slog.Error("migrate servers.ping_interface", "err", err)
+			panic(err)
+		}
+	}
+
 	// create default user
 	var cnt int
 	err = DB.Get(&cnt, "SELECT COUNT(*) FROM users")
@@ -57,4 +65,14 @@ func IsUniqueConstraintErr(err error) bool {
 		return sqliteErr.ExtendedCode == 2067 // SQLITE_CONSTRAINT_UNIQUE
 	}
 	return false
+}
+
+func columnExists(table, column string) bool {
+	var cnt int
+	err := DB.Get(&cnt, "SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?", table, column)
+	if err != nil {
+		slog.Error("pragma_table_info", "err", err)
+		return false
+	}
+	return cnt > 0
 }

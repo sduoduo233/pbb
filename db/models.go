@@ -37,6 +37,8 @@ type Server struct {
 	OS      sql.NullString `db:"operating_system"`
 	Cpu     sql.NullString `db:"cpu"`
 	Version sql.NullString `db:"version"`
+
+	PingInterface sql.NullString `db:"ping_interface"`
 }
 
 type ServerWithGroupLabel struct {

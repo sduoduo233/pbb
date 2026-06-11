@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS servers (
     arch TEXT,
     operating_system TEXT,
     cpu TEXT,
-    version TEXT
+    version TEXT,
+
+    ping_interface TEXT
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS server_metrics (

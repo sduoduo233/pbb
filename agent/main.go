@@ -282,6 +282,7 @@ func reportSystemInfo() error {
 
 var relatedServices = make([]types.Service, 0)
 var serviceMetrics = make([]types.ServiceMetric, 0)
+var pingInterface string
 
 func pingServices() error {
 	serviceMetrics = make([]types.ServiceMetric, 0)
@@ -294,9 +295,9 @@ func pingServices() error {
 
 		switch s.Type {
 		case "ping":
-			go icmpPing(resultsCh, s.Host, uint64(timestamp), s.Id)
+			go icmpPing(resultsCh, s.Host, uint64(timestamp), s.Id, pingInterface)
 		case "tcp":
-			go tcpPing(resultsCh, s.Host, uint64(timestamp), s.Id)
+			go tcpPing(resultsCh, s.Host, uint64(timestamp), s.Id, pingInterface)
 		}
 	}
 
@@ -309,10 +310,16 @@ func pingServices() error {
 		return fmt.Errorf("post: %w", err)
 	}
 
-	err = json.Unmarshal(body, &relatedServices)
+	var resp struct {
+		Services      []types.Service `json:"services"`
+		PingInterface string          `json:"ping_interface"`
+	}
+	err = json.Unmarshal(body, &resp)
 	if err != nil {
 		return fmt.Errorf("post: %w", err)
 	}
+	relatedServices = resp.Services
+	pingInterface = resp.PingInterface
 
 	return nil
 }

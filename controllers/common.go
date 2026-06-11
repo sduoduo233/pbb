@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strings"
 )
 
 type D map[string]any
@@ -18,6 +19,14 @@ func randomToken() string {
 	var buf [16]byte
 	rand.Read(buf[:])
 	return hex.EncodeToString(buf[:])
+}
+
+func normalizeOptionalField(s string) any {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 // https://yourbasic.org/golang/formatting-byte-size-to-human-readable-format/

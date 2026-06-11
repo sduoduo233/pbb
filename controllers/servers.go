@@ -40,11 +40,12 @@ func doAddServer(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid group ID")
 	}
+	pingInterface := normalizeOptionalField(c.FormValue("ping_interface"))
 
 	if groupID < 0 {
-		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret) VALUES (?, ?, ?, ?)", label, nil, hidden, secret)
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret, ping_interface) VALUES (?, ?, ?, ?, ?)", label, nil, hidden, secret, pingInterface)
 	} else {
-		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret) VALUES (?, ?, ?, ?)", label, groupID, hidden, secret)
+		_, err = db.DB.Exec("INSERT INTO servers (label, group_id, hidden, secret, ping_interface) VALUES (?, ?, ?, ?, ?)", label, groupID, hidden, secret, pingInterface)
 	}
 	if err != nil {
 		if db.IsUniqueConstraintErr(err) {
@@ -83,10 +84,11 @@ func editServer(c echo.Context) error {
 	return c.Render(http.StatusOK, "edit_server", D{
 		"title": "Edit Server",
 		"post": D{
-			"label":  server.Label,
-			"group":  If(server.GroupId.Valid, server.GroupId.Int32, -1),
-			"hidden": If(server.Hidden, "yes", "no"),
-			"secret": server.Secret,
+			"label":          server.Label,
+			"group":          If(server.GroupId.Valid, server.GroupId.Int32, -1),
+			"hidden":         If(server.Hidden, "yes", "no"),
+			"secret":         server.Secret,
+			"ping_interface": server.PingInterface.String,
 		},
 		"id":     id,
 		"groups": groups,
@@ -102,11 +104,12 @@ func doEditServer(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "Invalid group ID")
 	}
+	pingInterface := normalizeOptionalField(c.FormValue("ping_interface"))
 
 	if groupID < 0 {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, nil, hidden, secret, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ?, ping_interface = ? WHERE id = ?", label, nil, hidden, secret, pingInterface, id)
 	} else {
-		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ? WHERE id = ?", label, groupID, hidden, secret, id)
+		_, err = db.DB.Exec("UPDATE servers SET label = ?, group_id = ?, hidden = ?, secret = ?, ping_interface = ? WHERE id = ?", label, groupID, hidden, secret, pingInterface, id)
 	}
 	if err != nil {
 		if db.IsUniqueConstraintErr(err) {
