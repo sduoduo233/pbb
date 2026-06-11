@@ -1,6 +1,6 @@
 {{ define "index_servers_table" }}
 
-<div hx-get="/servers?view=table" hx-trigger="every 3s" hx-swap="morphdom">
+<div hx-get="/servers?view={{ .view }}" hx-trigger="every 3s" hx-swap="morphdom">
 
 <div class="overflow-auto text-nowrap">
 
