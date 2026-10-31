@@ -124,6 +124,13 @@ CREATE TABLE IF NOT EXISTS server_services (
     UNIQUE(server_id, service_id)
 );
 
+CREATE TABLE IF NOT EXISTS telegram_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL
+) STRICT;
+
 INSERT OR IGNORE INTO settings (key, value) VALUES
     ('public_url', 'http://localhost:3005'),
-    ('site_name', 'pbb');
+    ('site_name', 'pbb'),
+    ('telegram_bot_token', ''),
+    ('telegram_notify', '0');

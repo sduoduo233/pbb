@@ -119,3 +119,8 @@ type ServerService struct {
 	ServerId  int32 `db:"server_id" json:"server_id"`
 	ServiceId int32 `db:"service_id" json:"service_id"`
 }
+
+type TelegramUser struct {
+	Id     int32 `db:"id"`
+	UserId int64 `db:"user_id"`
+}

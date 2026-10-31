@@ -10,6 +10,7 @@ import (
 	"github.com/sduoduo233/pbb/cron"
 	"github.com/sduoduo233/pbb/db"
 	"github.com/sduoduo233/pbb/html"
+	"github.com/sduoduo233/pbb/telegram"
 )
 
 func main() {
@@ -47,6 +48,9 @@ func main() {
 
 	// cron jobs
 	cron.Init()
+
+	// telegram bot
+	telegram.Init()
 
 	// controllers
 	controllers.Route(e.Group(""))

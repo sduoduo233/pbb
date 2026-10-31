@@ -9,15 +9,17 @@ import (
 
 	"github.com/sduoduo233/pbb/controllers/types"
 	"github.com/sduoduo233/pbb/db"
+	"github.com/sduoduo233/pbb/telegram"
 )
 
 func incident() {
 	type isOnline struct {
-		Id     int32 `db:"id"`
-		Online bool  `db:"online"`
+		Id     int32  `db:"id"`
+		Label  string `db:"label"`
+		Online bool   `db:"online"`
 	}
 	var online []isOnline
-	err := db.DB.Select(&online, "SELECT id, last_report > ? AS online FROM servers WHERE last_report IS NOT NULL", time.Now().Add(-time.Second*30).Unix())
+	err := db.DB.Select(&online, "SELECT id, label, last_report > ? AS online FROM servers WHERE last_report IS NOT NULL", time.Now().Add(-time.Second*30).Unix())
 	if err != nil {
 		slog.Error("incident check", "err", fmt.Errorf("db: %w", err))
 		return
@@ -45,6 +47,7 @@ func incident() {
 				continue
 			}
 			slog.Info("incident created", "server_id", v.Id, "state", incident.State, "started_at", incident.StartedAt)
+			telegram.Notify(fmt.Sprintf("🔴 %s is offline", v.Label))
 			continue
 		}
 		if incident.State == db.IncidentStateOngoing && v.Online {
@@ -55,6 +58,8 @@ func incident() {
 				continue
 			}
 			slog.Info("incident resolved", "server_id", v.Id, "state", db.IncidentStateResolved, "ended_at", time.Now().Unix())
+			downtime := time.Duration(time.Now().Unix()-incident.StartedAt) * time.Second
+			telegram.Notify(fmt.Sprintf("🟢 %s is back online (down for %s)", v.Label, downtime))
 			continue
 		}
 	}

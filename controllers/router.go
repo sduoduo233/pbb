@@ -51,6 +51,9 @@ func Route(g *echo.Group) {
 
 	g.GET("/dashboard/settings", settings, mustAuth)
 	g.POST("/dashboard/settings", doUpdateSettings, mustAuth)
+	g.POST("/dashboard/settings/telegram", doUpdateTelegramSettings, mustAuth)
+	g.POST("/dashboard/settings/telegram/users", doAddTelegramUser, mustAuth)
+	g.DELETE("/dashboard/settings/telegram/users/:id", deleteTelegramUser, mustAuth)
 
 	g.GET("/dashboard/services", services, mustAuth)
 	g.GET("/dashboard/services/add", addService, mustAuth)

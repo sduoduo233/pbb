@@ -3,6 +3,15 @@
 
 {{ template "dashboard_header" . }}
 
+<nav>
+    <ul>
+        <li><a href="/dashboard/settings" {{ if eq .tab "general" }}aria-current="page"{{ end }}>General</a></li>
+        <li><a href="/dashboard/settings?tab=telegram" {{ if eq .tab "telegram" }}aria-current="page"{{ end }}>Telegram</a></li>
+    </ul>
+</nav>
+
+{{ if eq .tab "general" }}
+
 <form action="/dashboard/settings" method="post">
 
     {{ template "csrf" . }}
@@ -20,6 +29,67 @@
         <button>Save</button>
 
 </form>
+
+{{ end }}
+
+{{ if eq .tab "telegram" }}
+
+<form action="/dashboard/settings/telegram" method="post">
+
+    {{ template "csrf" . }}
+
+    <label>
+        Bot Token
+        <input type="password" placeholder="123456:ABC-DEF..." name="telegram_bot_token" value="{{ .settings.telegram_bot_token }}" autocomplete="off">
+    </label>
+
+    <label>
+        <input type="checkbox" role="switch" name="telegram_notify" {{ if eq .settings.telegram_notify "1" }}checked{{ end }}>
+        Online/offline notifications
+    </label>
+
+    <button>Save</button>
+
+</form>
+
+<h3>Authorized Users</h3>
+
+<form action="/dashboard/settings/telegram/users" method="post">
+
+    {{ template "csrf" . }}
+
+    <fieldset role="group">
+        <input type="number" placeholder="Telegram user ID" required name="user_id">
+        <button>Add</button>
+    </fieldset>
+
+</form>
+
+<div class="overflow-auto text-nowrap">
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>User ID</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .telegramUsers }}
+            <tr>
+                <td>{{ .Id }}</td>
+                <td>{{ .UserId }}</td>
+                <th>
+                    {{ template "delete_button" (printf "/dashboard/settings/telegram/users/%d" .Id) }}
+                </th>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+
+{{ end }}
 
 {{ template "footer" . }}
 {{ end }}
